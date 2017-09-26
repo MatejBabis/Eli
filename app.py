@@ -104,19 +104,29 @@ def makeWebhookResult(data):
         return {}
 
     # Collect the output variables
-    item = channel.get('item')
-    location = channel.get('location')
-    units = channel.get('units')
-    if (location is None) or (item is None) or (units is None):
-        return {}
-    condition = item.get('condition')
-    if condition is None:
+    # item = channel.get('item')
+    # location = channel.get('location')
+    # units = channel.get('units')
+    # if (location is None) or (item is None) or (units is None):
+    #     return {}
+    # condition = item.get('condition')
+    # if condition is None:
+    #     return {}
+    #
+    # # Output sentence
+    # speech = "Today in " + location.get('city') + ": " + condition.get('text') + \
+    #          ", the temperature is " + \
+    #     condition.get('temp') + " " + units.get('temperature')
+
+    condition = channel.get('item').get('condition')
+    city = channel.get('location').get('city')
+    units = channel.get('units').get('temperature')
+    if (condition is None) or (city is None) or (units is None):
         return {}
 
     # Output sentence
-    speech = "Today in " + location.get('city') + ": " + condition.get('text') + \
-             ", the temperature is " + \
-        condition.get('temp') + " " + units.get('temperature')
+    speech = "Today in " + city + ": " + condition.get('text') + \
+             ", the temperature is " + condition.get('temp') + " " + units
 
     # print("Output sentence:")
     # print(speech)
