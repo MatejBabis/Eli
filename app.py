@@ -38,12 +38,13 @@ def webhook():
     req = request.get_json(silent=True, force=True)
 
     print("Request:")
-    print(json.dumps(req))
+    print(json.dumps(req, indent=4))
 
     res = processRequest(req)
+    res = json.dumps(res, indent=4)
 
     print("Response:")
-    print(json.dumps(res, indent=4))
+    print(res)
 
     # Converts the response to a real response object
     r = make_response(res)
