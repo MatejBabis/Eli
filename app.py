@@ -60,26 +60,26 @@ def processRequest(req):
 
     # Yahoo weather base url
     baseurl = "https://query.yahooapis.com/v1/public/yql?"
-    # Get the YQL result
-    yql_query = makeYqlQuery(req)
-    print("yql_query", yql_query)
 
+    # Get the YQL query
+    yql_query = makeYqlQuery(req)
     if yql_query is None:
         return {}
 
+    # Change the query into a URL
     yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
-    print("yql_url", yql_url)
+    # Get the result for the query
     result = urlopen(yql_url).read()
-    print("result", result)
+    # Decode the raw result into JSON
     data = json.loads(result)
-    print("data", data)
 
+    # Get the result
     res = makeWebhookResult(data)
     return res
 
 
 def makeYqlQuery(req):
-    # Get the parameter value from the JSON
+    # Get the parameter value from the JSON request
     result = req.get("result")
     parameters = result.get("parameters")
     city = parameters.get("geo-city")
@@ -87,48 +87,47 @@ def makeYqlQuery(req):
     if city is None:
         return None
 
-    # SQL query
+    # YQL query
     return "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='" + city + "')"
 
 
 def makeWebhookResult(data):
+    # Check if the response contains the expected data
     query = data.get('query')
     if query is None:
         return {}
-
     result = query.get('results')
     if result is None:
         return {}
-
     channel = result.get('channel')
     if channel is None:
         return {}
 
+    # Collect the output variables
     item = channel.get('item')
     location = channel.get('location')
     units = channel.get('units')
     if (location is None) or (item is None) or (units is None):
         return {}
-
     condition = item.get('condition')
     if condition is None:
         return {}
 
-    # print(json.dumps(item, indent=4))
-
+    # Output sentence
     speech = "Today in " + location.get('city') + ": " + condition.get('text') + \
              ", the temperature is " + \
         condition.get('temp') + " " + units.get('temperature')
 
-    print("Response:")
-    print(speech)
+    # print("Output sentence:")
+    # print(speech)
 
+    # Return the JSON response
     return {
         "speech": speech,
         "displayText": speech,
         # "data": data,
         # "contextOut": [],
-        "source": "apiai-weather-webhook-sample"
+        "source": "projecteli"
     }
 
 
