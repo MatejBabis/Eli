@@ -1,39 +1,23 @@
-# -*- coding:utf8 -*-
-# !/usr/bin/env python
-# Copyright 2017 Google Inc. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 from __future__ import print_function
 from future.standard_library import install_aliases
 install_aliases()
 
-from urllib.parse import urlparse, urlencode
-from urllib.request import urlopen, Request
-from urllib.error import HTTPError
+from urllib.parse import urlencode  # noqa
+from urllib.request import urlopen  # noqa
 
-import json
-import os
+import json  # noqa
+import os  # noqa
 
-from flask import Flask
-from flask import request
-from flask import make_response
+from flask import Flask  # noqa
+from flask import request  # noqa
+from flask import make_response  # noqa
 
 # Flask app should start in global layout
 app = Flask(__name__)
 
 
 @app.route('/webhook', methods=['POST'])
+# The webhook
 def webhook():
     req = request.get_json(silent=True, force=True)
 
@@ -53,6 +37,7 @@ def webhook():
     return r
 
 
+# Processes the request received
 def processRequest(req):
     # Name of the action
     if req.get("result").get("action") != "yahooWeatherForecast":
@@ -78,6 +63,7 @@ def processRequest(req):
     return res
 
 
+# Creates the Yahoo Query Language query necessary for the response
 def makeYqlQuery(req):
     # Get the parameter value from the JSON request
     result = req.get("result")
@@ -88,9 +74,11 @@ def makeYqlQuery(req):
         return None
 
     # YQL query
-    return "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='" + city + "')"
+    return "select * from weather.forecast where woeid in (" + \
+        "select woeid from geo.places(1) where text='" + city + "')"
 
 
+# Creates the response that will be sent to the user
 def makeWebhookResult(data):
     # Check if the response contains the expected data
     query = data.get('query')
@@ -104,20 +92,6 @@ def makeWebhookResult(data):
         return {}
 
     # Collect the output variables
-    # item = channel.get('item')
-    # location = channel.get('location')
-    # units = channel.get('units')
-    # if (location is None) or (item is None) or (units is None):
-    #     return {}
-    # condition = item.get('condition')
-    # if condition is None:
-    #     return {}
-    #
-    # # Output sentence
-    # speech = "Today in " + location.get('city') + ": " + condition.get('text') + \
-    #          ", the temperature is " + \
-    #     condition.get('temp') + " " + units.get('temperature')
-
     condition = channel.get('item').get('condition')
     city = channel.get('location').get('city')
     units = channel.get('units').get('temperature')
@@ -126,7 +100,7 @@ def makeWebhookResult(data):
 
     # Output sentence
     speech = "Today in " + city + ": " + condition.get('text') + \
-             ", the temperature is " + condition.get('temp') + " " + units
+             ", the temperature is " + condition.get('temp') + "°" + units
 
     # print("Output sentence:")
     # print(speech)
