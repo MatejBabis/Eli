@@ -16,13 +16,19 @@ from flask import make_response     # noqa
 from flask import render_template   # noqa
 
 # Flask app should start in global layout
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 
 
 @app.route('/')
 # Front-end redirection
 def index():
     return render_template("index.html")
+
+
+@app.route('/<path:filename>')
+# Return files from the "/static" folder
+def serveFileFromRoot(filename):
+    return app.send_static_file(filename)
 
 
 @app.route('/webhook', methods=['POST'])
