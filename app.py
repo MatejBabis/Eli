@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
 from future.standard_library import install_aliases
 install_aliases()
@@ -5,15 +7,22 @@ install_aliases()
 from urllib.parse import urlencode  # noqa
 from urllib.request import urlopen  # noqa
 
-import json  # noqa
-import os  # noqa
+import json                         # noqa
+import os                           # noqa
 
-from flask import Flask  # noqa
-from flask import request  # noqa
-from flask import make_response  # noqa
+from flask import Flask             # noqa
+from flask import request           # noqa
+from flask import make_response     # noqa
+from flask import render_template   # noqa
 
 # Flask app should start in global layout
 app = Flask(__name__)
+
+
+@app.route('/')
+# Front-end redirection
+def index():
+    return render_template("index.html")
 
 
 @app.route('/webhook', methods=['POST'])
