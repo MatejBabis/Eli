@@ -40,14 +40,18 @@ def serveFileFromRoot(filename):
 def webhook():
     req = request.get_json(silent=True, force=True)
 
-    # print("Request:")
-    # print(json.dumps(req, indent=4))
+    print
+    print("Request:")
+    print(json.dumps(req, indent=4))
+    print
 
     res = processRequest(req)
     res = json.dumps(res, indent=4)
 
-    # print("Response:")
-    # print(res)
+    print
+    print("Response:")
+    print(res)
+    print
 
     # Converts the response to a real response object
     r = make_response(res)
