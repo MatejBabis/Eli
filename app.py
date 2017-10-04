@@ -98,8 +98,13 @@ def processRequest(req):
         # Search Spotify
         rawResults = sp.search(q=spotify_query, limit=10)
 
+        print(rawResults)
+
         # Get the results
         metadata = songMetadata(rawResults)
+
+        print(metadata)
+
         res = outputString(metadata)
         return res
 
@@ -121,8 +126,6 @@ def makeSpotifyQuery(req):
 
     if parameters.get("spotify-track") is not None:
         track = parameters.get("spotify-track")
-
-    print("Artist " + artist + "Track: " + track)
 
     # Search for artist and/or track
     if (parameters.get("spotify-artist") and
