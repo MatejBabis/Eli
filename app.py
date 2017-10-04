@@ -40,18 +40,14 @@ def serveFileFromRoot(filename):
 def webhook():
     req = request.get_json(silent=True, force=True)
 
-    print
     print("Request:")
     print(json.dumps(req, indent=4))
-    print
 
     res = processRequest(req)
     res = json.dumps(res, indent=4)
 
-    print
     print("Response:")
     print(res)
-    print
 
     # Converts the response to a real response object
     r = make_response(res)
@@ -228,7 +224,7 @@ def outputString(metadata):
 
     # TODO: ARE ALL THE ENTRIES NECESSARY?
     return {
-        "name": string,
+        "speech": string,
         "displayText": string,
         "source": "projecteli"
     }
