@@ -92,8 +92,6 @@ def processRequest(req):
         sp = spotipy.Spotify(
             client_credentials_manager=client_credentials_manager)
 
-        print("ABOUT TO START")
-
         # Get the query to be searched
         spotify_query = makeSpotifyQuery(req)
 
@@ -134,8 +132,10 @@ def makeSpotifyQuery(req):
     # Search for artist and/or track
     if (parameters.get("spotify-artist") and
             parameters.get("spotify-rack") is None):
+        print("WE SHOULDN'T BE HERE")
         return None
     else:
+        print("WE SHOULD BE HERE")
         return artist + " " + track
 
 
