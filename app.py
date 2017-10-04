@@ -92,8 +92,12 @@ def processRequest(req):
         sp = spotipy.Spotify(
             client_credentials_manager=client_credentials_manager)
 
+        print("ABOUT TO START")
+
         # Get the query to be searched
         spotify_query = makeSpotifyQuery(req)
+
+        print(spotify_query)
 
         # Search Spotify
         rawResults = sp.search(q=spotify_query, limit=10)
