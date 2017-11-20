@@ -108,22 +108,22 @@ def makeSpotifyQuery(req):
     parameters = result.get("parameters")
 
     if parameters.get("spotify-artist") is not None:
-        artist = "artist:" + parameters.get("spotify-artist")
+        artist = parameters.get("spotify-artist")
 
     if parameters.get("spotify-track") is not None:
-        track = "track:" + parameters.get("spotify-track")
+        track = parameters.get("spotify-track")
 
     # Search for artist and/or track
     if ((parameters.get("spotify-artist") is None) and
             (parameters.get("spotify-track") is None)):
         return None
     else:
+        if artist and track:
+            return track + " " + artist
         if artist:
             return artist
         if track:
             return track
-        if artist and track:
-            return artist + "," + track
 
 
 # Creates the Yahoo Query Language query necessary for the response
@@ -188,8 +188,6 @@ def songMetadata(searchResults):
                                          key=lambda x: x['popularity'],
                                          reverse=True)
     # print(json.dumps(resultListBasedOnPopularity, indent=4))
-
-    resultListBasedOnPopularity = resultList
 
     output = []
 
