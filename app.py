@@ -89,6 +89,7 @@ def processRequest(req):
             client_credentials_manager=client_credentials_manager)
         # Get the query to be searched
         spotify_query = makeSpotifyQuery(req)
+        print(spotify_query)
         # Search Spotify
         rawResults = sp.search(q=spotify_query, limit=10)
 
@@ -120,7 +121,6 @@ def makeSpotifyQuery(req):
     # Search for artist and/or track
     if (parameters.get("spotify-artist") and
             parameters.get("spotify-track") is None):
-        print("FUCKED")
         return None
     else:
         return artist + " " + track
