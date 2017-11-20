@@ -58,8 +58,10 @@ def webhook():
 
 # Processes the request received
 def processRequest(req):
+    print("\nProcessing\n")
     # Name of the action
     if req.get("result").get("action") == "yahooWeatherForecast":
+        print("\Incorrect\n")
         # Yahoo weather base url
         baseurl = "https://query.yahooapis.com/v1/public/yql?"
 
@@ -80,6 +82,7 @@ def processRequest(req):
         return res
 
     elif req.get("result").get("action") == "spotifyTrackInformation":
+        print("\Correct\n")
         # TODO: REMOVE HARDCODING
         # API credentials
         client_credentials_manager = SpotifyClientCredentials(
@@ -101,7 +104,6 @@ def processRequest(req):
         return res
 
     else:
-        print("\nFAILED\n")
         return {}
 
 
