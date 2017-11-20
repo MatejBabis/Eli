@@ -95,9 +95,6 @@ def processRequest(req):
         # Get the results
         metadata = songMetadata(rawResults)
 
-        print(rawResults)
-
-        # print(json.dumps(metadata, indent=4))
         res = outputString(metadata)
         return res
 
@@ -110,21 +107,23 @@ def makeSpotifyQuery(req):
     result = req.get("result")
     parameters = result.get("parameters")
 
-    artist = ""
-    track = ""
-
     if parameters.get("spotify-artist") is not None:
-        artist = parameters.get("spotify-artist")
+        artist = "artist:" + parameters.get("spotify-artist")
 
     if parameters.get("spotify-track") is not None:
-        track = parameters.get("spotify-track")
+        track = "track:" + parameters.get("spotify-track")
 
     # Search for artist and/or track
-    if ((parameters.get("spotify-artist") is "") and
-            (parameters.get("spotify-track") is "")):
+    if ((parameters.get("spotify-artist") is None) and
+            (parameters.get("spotify-track") is None)):
         return None
     else:
-        return artist + " " + track
+        if artist:
+            return artist
+        if track:
+            return track
+        if artist and track:
+            return artist + "," + track
 
 
 # Creates the Yahoo Query Language query necessary for the response
@@ -185,43 +184,44 @@ def songMetadata(searchResults):
     resultList = searchResults["tracks"]["items"]
 
     # For results sorted on song popularity
-    # resultListBasedOnPopularity = sorted(resultList,
-    #                                      key=lambda x: x['popularity'],
-    #                                      reverse=True)
-    # print resultListBasedOnPopularity
+    resultListBasedOnPopularity = sorted(resultList,
+                                         key=lambda x: x['popularity'],
+                                         reverse=True)
+    # print(json.dumps(resultListBasedOnPopularity, indent=4))
 
-    topHit = resultList[0]
+    output = []
 
-    # All artists
-    artists = ""
-    for a in topHit["artists"]:
-        artists += a["name"] + ", "
-    artists = artists[:-2]
+    for song in resultListBasedOnPopularity:
+        # List all artists
+        artists = ""
+        for a in song["artists"]:
+            artists += a["name"] + ", "
+        artists = artists[:-2]
 
-    # Track duration (assuming < 1hr)
-    lengthMs = topHit["duration_ms"]
-    length = str(timedelta(milliseconds=lengthMs))
-    # Remove the unnecessary hours and remaining milliseconds
-    length = length[2:].split('.')[0]
+        # Track duration (assuming < 1hr)
+        lengthMs = song["duration_ms"]
+        length = str(timedelta(milliseconds=lengthMs))
+        # Remove the unnecessary hours and remaining milliseconds
+        length = length[2:].split('.')[0]
 
-    return {
-        "track": topHit["name"],
-        "artist": artists,
-        "album": topHit["album"]["name"],
-        "length": length
-    }
+        output += [{
+            "track": song["name"],
+            "artist": artists,
+            "album": song["album"]["name"],
+            "length": length
+        }]
+
+    return output
 
 
 # Creates the output string to be received by the user
-def outputString(metadata):
-    if metadata is None:
+def outputString(outputList):
+    if outputList is None:
         return {}
 
-    string = "Spotify search discovered this:" + \
-             "\nTrack: " + metadata["track"] + \
-             "\nArtist: " + metadata["artist"] + \
-             "\nAlbum: " + metadata["album"] + \
-             "\nLength: " + metadata["length"]
+    string = "Spotify search discovered these songs:"
+    for item in outputList:
+        string += "\n\'" + item["track"] + "\' by " + item["artist"]
 
     # TODO: ARE ALL THE ENTRIES NECESSARY?
     return {
