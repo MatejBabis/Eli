@@ -92,8 +92,6 @@ def processRequest(req):
         # Search Spotify
         rawResults = sp.search(q=spotify_query, limit=10)
 
-        print(json.dumps(rawResults, indent=4))
-
         # Get the results
         metadata = songMetadata(rawResults)
 
