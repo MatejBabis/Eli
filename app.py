@@ -96,6 +96,7 @@ def processRequest(req):
 
         # Get the results
         metadata = songMetadata(rawResults)
+        print(metadata)
         res = outputString(metadata)
         return res
 
