@@ -112,6 +112,7 @@ def makeSpotifyQuery(req):
 
     if parameters.get("spotify-artist") is not None:
         artist = parameters.get("spotify-artist")
+        print(">>>> " + artist)
 
     if parameters.get("spotify-track") is not None:
         track = parameters.get("spotify-track")
@@ -119,6 +120,7 @@ def makeSpotifyQuery(req):
     # Search for artist and/or track
     if (parameters.get("spotify-artist") and
             parameters.get("spotify-track") is None):
+        print(">>>> FAILED")
         return None
     else:
         print(">>>> " + artist + " " + track)
