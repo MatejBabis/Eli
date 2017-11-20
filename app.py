@@ -107,9 +107,6 @@ def makeSpotifyQuery(req):
     result = req.get("result")
     parameters = result.get("parameters")
 
-    print(result)
-    print(parameters)
-
     artist = ""
     track = ""
 
@@ -124,6 +121,7 @@ def makeSpotifyQuery(req):
             parameters.get("spotify-track") is None):
         return None
     else:
+        print(">>>> " + artist + " " + track)
         return artist + " " + track
 
 
