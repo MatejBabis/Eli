@@ -183,15 +183,13 @@ def songMetadata(searchResults):
 
     resultList = searchResults["tracks"]["items"]
 
-    print
-    print(json.dumps(resultList, indent=4))
-    print
-
     # For results sorted on song popularity
     resultListBasedOnPopularity = sorted(resultList,
                                          key=lambda x: x['popularity'],
                                          reverse=True)
     # print(json.dumps(resultListBasedOnPopularity, indent=4))
+
+    resultListBasedOnPopularity = resultListBasedOnPopularity
 
     output = []
 
