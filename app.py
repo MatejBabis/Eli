@@ -89,7 +89,6 @@ def processRequest(req):
             client_credentials_manager=client_credentials_manager)
         # Get the query to be searched
         spotify_query = makeSpotifyQuery(req)
-        print(spotify_query)
         # Search Spotify
         rawResults = sp.search(q=spotify_query, limit=10)
 
@@ -103,11 +102,13 @@ def processRequest(req):
         return {}
 
 
-# Creates the Yahoo Query Language query necessary for the response
 def makeSpotifyQuery(req):
     # Get the parameter value from the JSON request
     result = req.get("result")
     parameters = result.get("parameters")
+
+    print(result)
+    print(parameters)
 
     artist = ""
     track = ""
@@ -163,7 +164,7 @@ def makeWebhookResult(data):
 
     # Output sentence
     speech = "Today in " + city + ": " + condition.get('text') + \
-             ", the temperature is " + condition.get('temp') + "°" + units
+        ", the temperature is " + condition.get('temp') + "°" + units
 
     # print("Output sentence:")
     # print(speech)
