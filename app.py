@@ -101,6 +101,7 @@ def processRequest(req):
         return res
 
     else:
+        print("\nFAILED\n")
         return {}
 
 
