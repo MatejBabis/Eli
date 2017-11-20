@@ -87,19 +87,15 @@ def processRequest(req):
             client_secret="08d00abdbb2b4f39891db99880dc819a")
         sp = spotipy.Spotify(
             client_credentials_manager=client_credentials_manager)
-        print("here1")
         # Get the query to be searched
         spotify_query = makeSpotifyQuery(req)
-        print("here2")
         # Search Spotify
         rawResults = sp.search(q=spotify_query, limit=10)
 
-        print("here3")
+        print(rawResults)
         # Get the results
         metadata = songMetadata(rawResults)
-        print("here4")
         res = outputString(metadata)
-        print("here5")
         return res
 
     else:
@@ -124,6 +120,7 @@ def makeSpotifyQuery(req):
     # Search for artist and/or track
     if (parameters.get("spotify-artist") and
             parameters.get("spotify-track") is None):
+        print("FUCKED")
         return None
     else:
         return artist + " " + track
