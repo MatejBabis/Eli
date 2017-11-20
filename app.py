@@ -189,7 +189,7 @@ def songMetadata(searchResults):
                                          reverse=True)
     # print(json.dumps(resultListBasedOnPopularity, indent=4))
 
-    resultListBasedOnPopularity = resultListBasedOnPopularity
+    resultListBasedOnPopularity = resultList
 
     output = []
 
