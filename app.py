@@ -40,13 +40,13 @@ def serveFileFromRoot(filename):
 def webhook():
     req = request.get_json(silent=True, force=True)
 
-    print("Request:")
-    print(json.dumps(req, indent=4))
+    # print("Request:")
+    # print(json.dumps(req, indent=4))
 
     res = processRequest(req)
     res = json.dumps(res, indent=4)
 
-    print("Response:")
+    print("\nResponse:")
     print(res)
 
     # Converts the response to a real response object
@@ -95,7 +95,9 @@ def processRequest(req):
         # Get the results
         metadata = songMetadata(rawResults)
 
-        print(json.dumps(metadata, indent=4))
+        print(rawResults)
+
+        # print(json.dumps(metadata, indent=4))
         res = outputString(metadata)
         return res
 
