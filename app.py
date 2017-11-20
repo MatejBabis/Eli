@@ -58,10 +58,8 @@ def webhook():
 
 # Processes the request received
 def processRequest(req):
-    print("\nProcessing\n")
     # Name of the action
     if req.get("result").get("action") == "yahooWeatherForecast":
-        print("\Incorrect\n")
         # Yahoo weather base url
         baseurl = "https://query.yahooapis.com/v1/public/yql?"
 
@@ -82,7 +80,6 @@ def processRequest(req):
         return res
 
     elif req.get("result").get("action") == "spotifyTrackInformation":
-        print("\Correct\n")
         # TODO: REMOVE HARDCODING
         # API credentials
         client_credentials_manager = SpotifyClientCredentials(
@@ -90,17 +87,19 @@ def processRequest(req):
             client_secret="08d00abdbb2b4f39891db99880dc819a")
         sp = spotipy.Spotify(
             client_credentials_manager=client_credentials_manager)
-
+        print("here1")
         # Get the query to be searched
         spotify_query = makeSpotifyQuery(req)
-
+        print("here2")
         # Search Spotify
         rawResults = sp.search(q=spotify_query, limit=10)
 
+        print("here3")
         # Get the results
         metadata = songMetadata(rawResults)
-        print(metadata)
+        print("here4")
         res = outputString(metadata)
+        print("here5")
         return res
 
     else:
