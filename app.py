@@ -40,8 +40,8 @@ def serveFileFromRoot(filename):
 def webhook():
     req = request.get_json(silent=True, force=True)
 
-    # print("Request:")
-    # print(json.dumps(req, indent=4))
+    print("Request:")
+    print(json.dumps(req, indent=4))
 
     res = processRequest(req)
     res = json.dumps(res, indent=4)
@@ -182,6 +182,10 @@ def songMetadata(searchResults):
         return {}
 
     resultList = searchResults["tracks"]["items"]
+
+    print
+    print(json.dumps(resultList, indent=4))
+    print
 
     # For results sorted on song popularity
     resultListBasedOnPopularity = sorted(resultList,
