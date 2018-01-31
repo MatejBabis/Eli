@@ -35,8 +35,8 @@ def serveFileFromRoot(filename):
 def webhook():
     req = request.get_json(silent=True, force=True)
 
-    print("Request:")
-    print(json.dumps(req, indent=4))
+    # print("Request:")
+    # print(json.dumps(req, indent=4))
 
     res = processRequest(req)
     res = json.dumps(res, indent=4)
@@ -60,20 +60,17 @@ def processRequest(req):
         return res
 
     elif req.get("result").get("action") == "spotifyTrackInformation":
-        # TODO: REMOVE HARDCODING
-        # API credentials
-        client_credentials_manager = spotify.SpotifyClientCredentials(
-            client_id="d31b8fce2ead4943b1408cf3ba6f98bb",
-            client_secret="08d00abdbb2b4f39891db99880dc819a")
+        sp = spotify.instance
 
-        sp = spotify.Spotify(
-            client_credentials_manager=client_credentials_manager)
+        print(sp)
 
         # Get the query to be searched
         # spotify_query = spotify.makeSpotifyQuery(req)
         spotify_query = "Robots Kraftwerk"
         # Search Spotify
         rawResults = sp.search(q=spotify_query, limit=10)
+
+        print(rawResults)
 
         # Get the results
         metadata = spotify.songMetadata(rawResults)

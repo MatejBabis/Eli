@@ -71,7 +71,7 @@ def songMetadata(searchResults):
 client_credentials_manager = SpotifyClientCredentials(
     client_id="d31b8fce2ead4943b1408cf3ba6f98bb",
     client_secret="08d00abdbb2b4f39891db99880dc819a")
-sp = spotipy.Spotify(
+instance = spotipy.Spotify(
     client_credentials_manager=client_credentials_manager)
 
 # spotify_query = song_artist + " " + song_title
