@@ -31,7 +31,7 @@ Python web application made possible using Flask framework.
 * Normalize.css
 * plyr
 
-##### Back End
+### Back End
 Collection of Python methods and libraries that build a model and query Million Song Dataset.
 
 ##### Libraries
