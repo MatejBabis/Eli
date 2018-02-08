@@ -18,7 +18,6 @@ Webhook: `https://projecteli.ngrok.io/`
 ```
 > python app.py
 > ./ngrok http -subdomain=projecteli 5000
-
 ```
 
 ### Front End
