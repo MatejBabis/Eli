@@ -4,47 +4,43 @@ from __future__ import print_function
 from future.standard_library import install_aliases
 install_aliases()
 
-from urllib.parse import urlencode                      # noqa
-from urllib.request import urlopen                      # noqa
+import json
+import os
 
-import json                                             # noqa
-import os                                               # noqa
+import model
+import interface
 
-import spotipy                                          # noqa
-from datetime import timedelta                          # noqa
-from spotipy.oauth2 import SpotifyClientCredentials     # noqa
-
-from flask import Flask                                 # noqa
-from flask import request                               # noqa
-from flask import make_response                         # noqa
-from flask import render_template                       # noqa
+from flask import Flask
+from flask import request
+from flask import make_response
+from flask import render_template
+from flask import current_app
 
 # Flask app should start in global layout
 app = Flask(__name__, static_url_path='')
 
-
 @app.route('/')
 # Front-end redirection
 def index():
+    # model instantiation
+    current_app.model = model.Interface()
     return render_template("index.html")
 
-
-@app.route('/<path:filename>')
-# Return files from the "/static" folder
-def serveFileFromRoot(filename):
-    return app.send_static_file(filename)
-
+@app.route('/blank')
+def showSignUp():
+    return render_template("blank.html")
 
 @app.route('/webhook', methods=['POST'])
 # The webhook
 def webhook():
     req = request.get_json(silent=True, force=True)
 
-    print("Request:")
-    print(json.dumps(req, indent=4))
+    # print("Request:")
+    # print(json.dumps(req, indent=4))
 
-    res = processRequest(req)
-    res = json.dumps(res, indent=4)
+    compoundRes = interface.processRequest(req, current_app.model)
+    res = json.dumps(compoundRes[0], indent=4)
+    current_app.model = compoundRes[1]
 
     print("\nResponse:")
     print(res)
@@ -56,183 +52,7 @@ def webhook():
     return r
 
 
-# Processes the request received
-def processRequest(req):
-    # Name of the action
-    if req.get("result").get("action") == "yahooWeatherForecast":
-        # Yahoo weather base url
-        baseurl = "https://query.yahooapis.com/v1/public/yql?"
-
-        # Get the YQL query
-        yql_query = makeYqlQuery(req)
-        if yql_query is None:
-            return {}
-
-        # Change the query into a URL
-        yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
-        # Get the result for the query
-        result = urlopen(yql_url).read()
-        # Decode the raw result into JSON
-        data = json.loads(result)
-
-        # Get the result
-        res = makeWebhookResult(data)
-        return res
-
-    elif req.get("result").get("action") == "spotifyTrackInformation":
-        # TODO: REMOVE HARDCODING
-        # API credentials
-        client_credentials_manager = SpotifyClientCredentials(
-            client_id="d31b8fce2ead4943b1408cf3ba6f98bb",
-            client_secret="08d00abdbb2b4f39891db99880dc819a")
-        sp = spotipy.Spotify(
-            client_credentials_manager=client_credentials_manager)
-        # Get the query to be searched
-        spotify_query = makeSpotifyQuery(req)
-        # Search Spotify
-        rawResults = sp.search(q=spotify_query, limit=10)
-
-        # Get the results
-        metadata = songMetadata(rawResults)
-
-        res = outputString(metadata)
-        return res
-
-    else:
-        return {}
-
-
-def makeSpotifyQuery(req):
-    # Get the parameter value from the JSON request
-    result = req.get("result")
-    parameters = result.get("parameters")
-
-    if parameters.get("spotify-artist") is not None:
-        artist = parameters.get("spotify-artist")
-
-    if parameters.get("spotify-track") is not None:
-        track = parameters.get("spotify-track")
-
-    # Search for artist and/or track
-    if ((parameters.get("spotify-artist") is None) and
-            (parameters.get("spotify-track") is None)):
-        return None
-    else:
-        if artist and track:
-            return track + " " + artist
-        if artist:
-            return artist
-        if track:
-            return track
-
-
-# Creates the Yahoo Query Language query necessary for the response
-def makeYqlQuery(req):
-    # Get the parameter value from the JSON request
-    result = req.get("result")
-    parameters = result.get("parameters")
-    city = parameters.get("geo-city")
-
-    if city is None:
-        return None
-
-    # YQL query
-    return "select * from weather.forecast where woeid in (" + \
-        "select woeid from geo.places(1) where text='" + city + "')"
-
-
-# Creates the response that will be sent to the user
-def makeWebhookResult(data):
-    # Check if the response contains the expected data
-    query = data.get('query')
-    if query is None:
-        return {}
-    result = query.get('results')
-    if result is None:
-        return {}
-    channel = result.get('channel')
-    if channel is None:
-        return {}
-
-    # Collect the output variables
-    condition = channel.get('item').get('condition')
-    city = channel.get('location').get('city')
-    units = channel.get('units').get('temperature')
-    if (condition is None) or (city is None) or (units is None):
-        return {}
-
-    # Output sentence
-    speech = "Today in " + city + ": " + condition.get('text') + \
-        ", the temperature is " + condition.get('temp') + "°" + units
-
-    # print("Output sentence:")
-    # print(speech)
-
-    # Return the JSON response
-    return {
-        "speech": speech,
-        "displayText": speech,
-        "source": "projecteli"
-    }
-
-
-# Transforms raw metadata into a dictionary form
-def songMetadata(searchResults):
-    if searchResults is None:
-        return {}
-
-    resultList = searchResults["tracks"]["items"]
-
-    # For results sorted on song popularity
-    resultListBasedOnPopularity = sorted(resultList,
-                                         key=lambda x: x['popularity'],
-                                         reverse=True)
-    # print(json.dumps(resultListBasedOnPopularity, indent=4))
-
-    output = []
-
-    for song in resultListBasedOnPopularity:
-        # List all artists
-        artists = ""
-        for a in song["artists"]:
-            artists += a["name"] + ", "
-        artists = artists[:-2]
-
-        # Track duration (assuming < 1hr)
-        lengthMs = song["duration_ms"]
-        length = str(timedelta(milliseconds=lengthMs))
-        # Remove the unnecessary hours and remaining milliseconds
-        length = length[2:].split('.')[0]
-
-        output += [{
-            "track": song["name"],
-            "artist": artists,
-            "album": song["album"]["name"],
-            "length": length
-        }]
-
-    return output
-
-
-# Creates the output string to be received by the user
-def outputString(outputList):
-    if outputList is None:
-        return {}
-
-    string = "Spotify search discovered these songs:"
-    for item in outputList:
-        string += "\n\'" + item["track"] + "\' by " + item["artist"]
-
-    # TODO: ARE ALL THE ENTRIES NECESSARY?
-    return {
-        "speech": string,
-        "displayText": string,
-        "source": "projecteli"
-    }
-
-
 if __name__ == '__main__':
-    # Necessary for Heroku
     port = int(os.getenv('PORT', 5000))
 
     print("Starting app on port %d" % port)

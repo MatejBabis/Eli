@@ -1,5 +1,9 @@
 venv
+ngrok
+
 *.pyc
-staticfiles
+*.data
+
 .env
-work.txt
+.idea
+.DS_Store
