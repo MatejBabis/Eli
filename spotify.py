@@ -10,36 +10,23 @@ def makeSpotifyQuery(req):
 
     if parameters.get("spotify-artist") is not None:
         artist = parameters.get("spotify-artist")
+    else:
+        return None
 
     if parameters.get("spotify-track") is not None:
         track = parameters.get("spotify-track")
-
-    # Search for artist and/or track
-    if ((parameters.get("spotify-artist") is None) and
-            (parameters.get("spotify-track") is None)):
-        return None
     else:
-        if artist and track:
-            return track + " " + artist
-        if artist:
-            return artist
-        if track:
-            return track
+        return None
+
+    return {"track":track, "artist":artist}
 
 
 # Transforms raw metadata into a dictionary form
-def songMetadata(searchResults):
-    if searchResults is None:
+def songsMetadata(searchResults, query):
+    if searchResults is None or query is None:
         return {}
 
     resultList = searchResults["tracks"]["items"]
-
-    # For results sorted on song popularity
-    # resultListBasedOnPopularity = sorted(resultList,
-    #                                      key=lambda x: x['popularity'],
-    #                                      reverse=True)
-    # print(json.dumps(resultListBasedOnPopularity, indent=4))
-
     output = []
 
     for song in resultList:
@@ -63,7 +50,34 @@ def songMetadata(searchResults):
             "preview_url": song["preview_url"]
         }]
 
+    # TODO: USE 'query' TO CHECK IF OUTPUT ACTUALLY CONTAINS DESIRED SONG
+
     return output
+
+
+# search for track's sample url
+def querySpotifyUrl(track):
+    sp = instance
+
+    artist = track[1]
+    song = track[2]
+
+    # construct Spotify query
+    spotify_query = artist + " " + song
+    spotify_query_result = sp.search(q=spotify_query, limit=1)
+
+    # Check if song exists on Spotify
+    if len(spotify_query_result["tracks"]["items"]) > 0:
+        # get only relevant metadata
+        metadata = songsMetadata(spotify_query_result, spotify_query)[0]
+
+        # if a playable preview exists, return it
+        if metadata["preview_url"] is not None:
+            return metadata["preview_url"]
+        else:
+            return None
+    else:
+        return None
 
 
 # TODO: REMOVE HARDCODING
@@ -73,6 +87,3 @@ client_credentials_manager = SpotifyClientCredentials(
     client_secret="08d00abdbb2b4f39891db99880dc819a")
 instance = spotipy.Spotify(
     client_credentials_manager=client_credentials_manager)
-
-# spotify_query = song_artist + " " + song_title
-# result = sp.search(q=spotify_query, limit=1)

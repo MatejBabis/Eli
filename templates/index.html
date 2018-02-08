@@ -2,28 +2,58 @@
 <html>
 
 <head>
-  <meta charset="UTF-8">
-
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Project Eli</title>
+  <!-- Custom stylesheet -->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/eli.css') }}" />
+  <!-- Additional stylesheets -->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/normalize.css') }}" />
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/plyr.css') }}" />
 
-  <style>
-    .centered-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translateX(-50%) translateY(-50%);
-    }
+  <!-- Dialogflow's JS -->
+  <script type="text/javascript" src="{{ url_for('static', filename='js/ApiAi.js') }}"></script>
+  <!-- Custom script -->
+  <script type="text/javascript" src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <!-- jQuery CDN -->
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
 
-    .large {
-      font-family: Helvetica, Arial, sans-serif;
-      font-size: 32px;
-    }
+  <meta name="viewport" content="width=device-width" />
 
-  </style>
 </head>
 
 <body>
-  <div class="centered-text large">PROJECT ELI</div>
+  <div class="container">
+    <div class="large">PROJECT ELI</div>
+    <div id="mic">
+      <a href="#" id="start">
+        <!-- Icon made by Smashicons from https://www.flaticon.com/ -->
+        <img src="img/mic.png" alt="Tap me to speak" />
+      </a>
+    </div>
+    <hr class="fadeout">
+    <div id="conversation"></div>
+  </div>
+
+  <!-- Google Analytics for the speech recognition -->
+  <script>
+    (function(i, s, o, g, r, a, m) {
+      i['GoogleAnalyticsObject'] = r;
+      i[r] = i[r] || function() {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date();
+      a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0];
+      a.async = 1;
+      a.src = g;
+      m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-907594-9', 'auto');
+    ga('send', 'pageview');
+
+  </script>
+  <!-- plyr -->
+  <script src="{{ url_for('static', filename='js/plyr.js') }}"></script>
 </body>
 
 </html>

@@ -1,1 +1,0 @@
-The presence of this file ensures that the free app hosted by Heroku never sleeps.
