@@ -32,21 +32,13 @@ function scrollDown() {
 
 // Toggle between microphone state
 function micActive() {
-  var event = jQuery.Event("listening");
-  $("#start").trigger(event);
-
   $("#start").css("background-color", "rgb(87,196,255)");
   $("#start").css("animation", "pulse-active 2s infinite");
-  $(this).one("click", micInactive);
 }
 
 function micInactive() {
-  var event = jQuery.Event("not-listening");
-  $("#start").trigger(event);
-
   $("#start").css("background-color", "rgb(207,207,213)");
   $("#start").css("animation", "")
-  $(this).one("click", micActive);
 }
 
 function botSays(text) {
@@ -68,12 +60,31 @@ function addSong(url) {
   scrollDown();
 }
 
+var playingStage = false;
+
 function playSong(desc, url) {
   return new Promise(function(resolve, reject) { // return a promise
+    playingStage = true;
     botSays(desc);
     addSong(url);
     $('audio:last').get(0).preload = "auto"; // intend to play through
     $("audio:last").on('ended pause', resolve);
+  });
+}
+
+function replaySong(audioElemIndex) {
+  return new Promise(function(resolve, reject) { // return a promise
+    // find all audio elemets
+    var audioElements = $('audio');
+    var songsDisplayed = audioElements.length;
+    // get the index position
+    var songPos = songsDisplayed - 2 + audioElemIndex;
+    // replay the song
+    var track = audioElements[songPos];
+    track.currentTime = 0;
+    track.play();
+    playingStage = true;
+    $(track).on('ended pause', resolve);
   });
 }
 
@@ -100,10 +111,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
   var recognition = new webkitSpeechRecognition();
   var recognizedText = null;
-  recognition.continuous = true;
+  var recording = null;
+  recognition.continuous = false;
 
   recognition.onstart = function() {
     recognizedText = null;
+    recording = true;
   };
 
   // Human input was received
@@ -112,61 +125,78 @@ document.addEventListener("DOMContentLoaded", function(event) {
     var lastResult = ev.results.length - 1;
     recognizedText = ev["results"][lastResult][0]["transcript"];
 
-    userSays(recognizedText);
-    ga('send', 'event', 'Message', 'add', 'user');
+    if (playingStage && (recognizedText == "next" || recognizedText == "stop" || recognizedText == "skip")) {
+      userSays(recognizedText);
+      ga('send', 'event', 'Message', 'add', 'user');
+      // stop the currently playing audio
+      $('.plyr--playing').children()[0].pause();
+    } else if (playingStage) {
+      //
+      // ignore any other input while tracks are playing
+      //
+    } else {
+      userSays(recognizedText);
+      ga('send', 'event', 'Message', 'add', 'user');
 
-    // Dialogflow starts here
-    // roughly based on https://jaanus.com/api-ai-voicebot/
-    let promise = apiClient.textRequest(recognizedText);
-    promise
-      .then(handleResponse)
-      .catch(handleError);
+      // Dialogflow starts here
+      // roughly based on https://jaanus.com/api-ai-voicebot/
+      let promise = apiClient.textRequest(recognizedText);
+      promise
+        .then(handleResponse)
+        .catch(handleError);
 
-    function handleResponse(serverResponse) {
-
-      if (serverResponse["result"]["action"] == "preferenceElicitation") {
-        var metadata = serverResponse["result"]["fulfillment"]["data"];
+      function handleResponse(serverResponse) {
+        // say the response
         var speech = serverResponse["result"]["fulfillment"]["speech"];
-
-        var t1_desc = metadata[0][0];
-        var t1_url = metadata[0][1];
-        var t2_desc = metadata[1][0];
-        var t2_url = metadata[1][1];
-
         var msg = new SpeechSynthesisUtterance(speech);
         botSays(speech);
 
         ga('send', 'event', 'Message', 'add', 'bot');
-
         window.speechSynthesis.speak(msg);
 
-        // FIXME: FIRST COMPARISON TRACKS SOMETIMES WON'T GET ADDED
+        response = serverResponse["result"]["action"];
 
-        msg.onend = function() {
-          playSong(t1_desc, t1_url).then(function() {
-            playSong(t2_desc, t2_url).then(function() {
-              var question = "Which one did you like better?";
-              msg = new SpeechSynthesisUtterance(question);
-              botSays(question);
-              window.speechSynthesis.speak(msg);
+        // Give me two songs
+        if (response == "preferenceElicitation") {
+          var metadata = serverResponse["result"]["fulfillment"]["data"];
+
+          var t1_desc = metadata[0][0];
+          var t1_url = metadata[0][1];
+          var t2_desc = metadata[1][0];
+          var t2_url = metadata[1][1];
+
+          msg.onend = function() {
+            playSong(t1_desc, t1_url).then(function() {
+              playSong(t2_desc, t2_url).then(function() {
+                playingStage = false;
+                var question = "Which one did you like better?";
+                msg = new SpeechSynthesisUtterance(question);
+                botSays(question);
+                window.speechSynthesis.speak(msg);
+              })
             })
-          })
+          }
+          // Repeat a song
+        } else if (response == "preferenceElicitation.repeat") {
+          var choice = serverResponse["result"]["fulfillment"]["data"];
+          if (choice != null) {
+            msg.onend = function() {
+              replaySong(choice).then(function() {
+                playingStage = false;
+                var question = "Which one did you like better?";
+                msg = new SpeechSynthesisUtterance(question);
+                botSays(question);
+                window.speechSynthesis.speak(msg);
+              })
+            }
+          }
         }
-      } else {
-        var speech = serverResponse["result"]["fulfillment"]["speech"];
-
-        var msg = new SpeechSynthesisUtterance(speech);
-        botSays(speech);
-
-        ga('send', 'event', 'Message', 'add', 'bot');
-
-        window.speechSynthesis.speak(msg);
       }
-    }
 
-    function handleError(serverError) {
-      console.log("Error from api.ai server: ", serverError);
-      // TODO: PROBABLY SOME RESPONSE
+      function handleError(serverError) {
+        console.log("Error from api.ai server: ", serverError);
+        // TODO: PROBABLY SOME RESPONSE
+      }
     }
   };
 
@@ -176,17 +206,22 @@ document.addEventListener("DOMContentLoaded", function(event) {
   };
 
   // Listner for microphone button click
-  $("#start").one("click", micActive);
-
-  // If user wishes to start recording
-  $("#start").on("listening", function(ev) {
-    ga('send', 'event', 'Button', 'click');
-    recognition.start();
-    ev.preventDefault();
+  $("#start").on("click", function(ev) {
+    if (!recording) {
+      ga('send', 'event', 'Button', 'click');
+      micActive();
+      recognition.start();
+      ev.preventDefault();
+      recording = true;
+    } else {
+      // If user wishes to stop recording
+      console.log("aborted");
+      recognition.abort();
+    }
   });
 
-  // If user wishes to stop recording
-  $("#start").on("not-listening", function() {
-    recognition.stop();
-  });
+  recognition.onend = function() {
+    micInactive();
+    recording = false;
+  };
 });

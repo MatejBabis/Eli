@@ -141,4 +141,5 @@ def store_data_in_file(l, filename):
 def read_stored_data(filename):
     fd = open(filename, 'rb')
     dataset = pickle.load(fd)
+    print "Dataset succesfully loaded."
     return dataset

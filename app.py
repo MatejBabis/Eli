@@ -35,15 +35,15 @@ def showSignUp():
 def webhook():
     req = request.get_json(silent=True, force=True)
 
-    # print("Request:")
-    # print(json.dumps(req, indent=4))
+    print("\nRequest:")
+    print(json.dumps(req, indent=4) + "\n")
 
     compoundRes = interface.processRequest(req, current_app.model)
     res = json.dumps(compoundRes[0], indent=4)
     current_app.model = compoundRes[1]
 
     print("\nResponse:")
-    print(res)
+    print(res + "\n")
 
     # Converts the response to a real response object
     r = make_response(res)

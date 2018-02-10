@@ -1,3 +1,7 @@
+### Bug list
+* sometimes no tracks are played after the first 'start' command
+   * response is sent from the server, so possibly a Javascript issue
+
 # Eli bot
 
 This is a level 4 project by Matej Babis.

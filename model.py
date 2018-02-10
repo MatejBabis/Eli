@@ -95,7 +95,7 @@ class Interface:
         #
         # self.Ytrain = np.vstack((self.Ytrain, preference))
 
-        self.trackPairs += [(t1[2], t2[2])]
+        self.trackPairs += [(tracks[0], tracks[1])]
 
         return (t1_dsc, t1_url), (t2_dsc, t2_url)
     
