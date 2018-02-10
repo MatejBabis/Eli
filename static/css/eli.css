@@ -68,6 +68,28 @@ html {
    height: 48px;
 }
 
+#textInput {
+   display: block;
+   margin : 0 auto;
+   width: 150px;
+   height: 20px;
+   padding: 5px;
+   background: transparent;
+   border: none;
+   border-bottom: 1px solid #CFCFD5;
+   -webkit-transition: border-bottom 0.5s;
+}
+
+#textInput:focus{
+    outline: none;
+    border-bottom: 1px solid #57C4FF;
+}
+
+#textInput::placeholder {
+   color: #CFCFD5;
+}
+
+
 hr.fadeout {
   border: 0;
   height: 1px;

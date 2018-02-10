@@ -25,6 +25,88 @@ function isChrome() {
   }
 }
 
+// This is the core function that handles user input
+// TODO: BREAK INTO SEPARATE FUNCTIONS
+function handleInput(userText, dialogflowClient) {
+  if (playingStage && (userText == "next" || userText == "stop" || userText == "skip")) {
+    userSays(userText);
+    ga('send', 'event', 'Message', 'add', 'user');
+    // stop the currently playing audio
+    $('.plyr--playing').children()[0].pause();
+  } else if (playingStage) {
+    //
+    // ignore any other input while tracks are playing
+    //
+  } else {
+    userSays(userText);
+    ga('send', 'event', 'Message', 'add', 'user');
+
+    // Dialogflow starts here
+    // roughly based on https://jaanus.com/api-ai-voicebot/
+    let promise = dialogflowClient.textRequest(userText);
+    promise
+      .then(handleResponse)
+      .catch(handleError);
+
+    function handleResponse(serverResponse) {
+      // say the response
+      var speech = serverResponse["result"]["fulfillment"]["speech"];
+      var msg = new SpeechSynthesisUtterance(speech);
+      botSays(speech);
+
+      ga('send', 'event', 'Message', 'add', 'bot');
+      window.speechSynthesis.speak(msg);
+
+      response = serverResponse["result"]["action"];
+
+      // Give me two songs
+      if (response == "preferenceElicitation") {
+        var metadata = serverResponse["result"]["fulfillment"]["data"];
+
+        var t1_desc = metadata[0][0];
+        var t1_url = metadata[0][1];
+        var t2_desc = metadata[1][0];
+        var t2_url = metadata[1][1];
+
+        msg.onend = function() {
+          playSong(t1_desc, t1_url).then(function() {
+            playSong(t2_desc, t2_url).then(function() {
+              playingStage = false;
+              var question = "Which one did you like better?";
+              msg = new SpeechSynthesisUtterance(question);
+              botSays(question);
+              window.speechSynthesis.speak(msg);
+            })
+          })
+        }
+        // Repeat a song
+      } else if (response == "preferenceElicitation.repeat") {
+        var choice = serverResponse["result"]["fulfillment"]["data"];
+        if (choice != null) {
+          msg.onend = function() {
+            replaySong(choice).then(function() {
+              playingStage = false;
+              var question = "Which one did you like better?";
+              msg = new SpeechSynthesisUtterance(question);
+              botSays(question);
+              window.speechSynthesis.speak(msg);
+            })
+          }
+        }
+      }
+    }
+
+    function handleError(serverError) {
+      console.log("Error from api.ai server: ", serverError);
+      // TODO: PROBABLY SOME RESPONSE
+    }
+  }
+}
+
+// #######################
+// #  H E L P E R S      #
+// #######################
+
 function scrollDown() {
   var conv = document.querySelector('#conversation');
   conv.scrollTop = conv.scrollHeight - conv.clientHeight;
@@ -120,84 +202,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
   };
 
   // Human input was received
+  // MAIN BIT
   recognition.onresult = function(ev) {
     // For continuous speech, the results come as a list
     var lastResult = ev.results.length - 1;
     recognizedText = ev["results"][lastResult][0]["transcript"];
 
-    if (playingStage && (recognizedText == "next" || recognizedText == "stop" || recognizedText == "skip")) {
-      userSays(recognizedText);
-      ga('send', 'event', 'Message', 'add', 'user');
-      // stop the currently playing audio
-      $('.plyr--playing').children()[0].pause();
-    } else if (playingStage) {
-      //
-      // ignore any other input while tracks are playing
-      //
-    } else {
-      userSays(recognizedText);
-      ga('send', 'event', 'Message', 'add', 'user');
-
-      // Dialogflow starts here
-      // roughly based on https://jaanus.com/api-ai-voicebot/
-      let promise = apiClient.textRequest(recognizedText);
-      promise
-        .then(handleResponse)
-        .catch(handleError);
-
-      function handleResponse(serverResponse) {
-        // say the response
-        var speech = serverResponse["result"]["fulfillment"]["speech"];
-        var msg = new SpeechSynthesisUtterance(speech);
-        botSays(speech);
-
-        ga('send', 'event', 'Message', 'add', 'bot');
-        window.speechSynthesis.speak(msg);
-
-        response = serverResponse["result"]["action"];
-
-        // Give me two songs
-        if (response == "preferenceElicitation") {
-          var metadata = serverResponse["result"]["fulfillment"]["data"];
-
-          var t1_desc = metadata[0][0];
-          var t1_url = metadata[0][1];
-          var t2_desc = metadata[1][0];
-          var t2_url = metadata[1][1];
-
-          msg.onend = function() {
-            playSong(t1_desc, t1_url).then(function() {
-              playSong(t2_desc, t2_url).then(function() {
-                playingStage = false;
-                var question = "Which one did you like better?";
-                msg = new SpeechSynthesisUtterance(question);
-                botSays(question);
-                window.speechSynthesis.speak(msg);
-              })
-            })
-          }
-          // Repeat a song
-        } else if (response == "preferenceElicitation.repeat") {
-          var choice = serverResponse["result"]["fulfillment"]["data"];
-          if (choice != null) {
-            msg.onend = function() {
-              replaySong(choice).then(function() {
-                playingStage = false;
-                var question = "Which one did you like better?";
-                msg = new SpeechSynthesisUtterance(question);
-                botSays(question);
-                window.speechSynthesis.speak(msg);
-              })
-            }
-          }
-        }
-      }
-
-      function handleError(serverError) {
-        console.log("Error from api.ai server: ", serverError);
-        // TODO: PROBABLY SOME RESPONSE
-      }
-    }
+    handleInput(recognizedText, apiClient);
   };
 
   recognition.onerror = function(ev) {
@@ -224,4 +235,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
     micInactive();
     recording = false;
   };
+
+  // Handles text input
+  $("#textInput").keypress(function(event) {
+    if (event.which == 13) {
+      event.preventDefault();
+      var textInput = $("#textInput").val();
+      // Empty the field
+      $("#textInput").val("");
+      $("#textInput").blur();
+      // Don't send an empty query
+      if (textInput.length > 0) {
+        handleInput(textInput, apiClient);
+      }
+    }
+  });
 });
