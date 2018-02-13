@@ -20,12 +20,6 @@ sys.path.append(os.path.join(msd_code_path, 'PythonSrc'))
 import hdf5_getters as GETTERS   # noqa
 
 
-# TODO: REMOVE
-def foo():
-    foo.counter += 1
-foo.counter = 1
-
-
 def apply_to_all_files(basedir, func=lambda x: x, ext='.h5'):
     # Iterate all files
     """
@@ -46,13 +40,6 @@ def apply_to_all_files(basedir, func=lambda x: x, ext='.h5'):
         # apply function to all files
         for f in files:
             complete_data += [func(f)]
-
-            # TODO:REMOVE
-            if(foo.counter == 20):
-                break
-            foo()
-        if (foo.counter == 20):
-            break
 
     return complete_data
 
@@ -96,35 +83,18 @@ def func_to_extract_data_all(filename):
     return data
 
 
-def func_to_extract_data(filename):
-    # we define the function to apply to all files
-    """
-    This function does 4 simple things:
-    - open the song file
-    - get selected data
-    - close the file
-    - return the data
-    """
-
+def genre_processing_func(filename):
     h5 = GETTERS.open_h5_file_read(filename)
 
     track_id = GETTERS.get_track_id(h5)
     artist = GETTERS.get_artist_name(h5)
     title = GETTERS.get_title(h5)
-    pitches = GETTERS.get_segments_pitches(h5)
-    timbre = GETTERS.get_segments_timbre(h5)
-    loudness = GETTERS.get_segments_loudness_max(h5)
+    song_hotttnesss = GETTERS.get_song_hotttnesss(h5)
 
     data = [track_id,
             artist,
             title,
-            # mean for each column in pitches
-            map(np.mean, zip(*pitches)),
-            # same for timbre
-            map(np.mean, zip(*timbre)),
-            # and average value for max_loudness
-            np.mean(loudness)
-            ]
+            song_hotttnesss]
 
     h5.close()
 

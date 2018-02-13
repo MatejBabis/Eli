@@ -33,6 +33,7 @@ function handleInput(userText, dialogflowClient) {
     ga('send', 'event', 'Message', 'add', 'user');
     // stop the currently playing audio
     $('.plyr--playing').children()[0].pause();
+    playingStage = false;
   } else if (playingStage) {
     //
     // ignore any other input while tracks are playing
@@ -58,10 +59,11 @@ function handleInput(userText, dialogflowClient) {
       window.speechSynthesis.speak(msg);
 
       response = serverResponse["result"]["action"];
-
+      console.log("got a response");
       // Give me two songs
       if (response == "preferenceElicitation") {
         var metadata = serverResponse["result"]["fulfillment"]["data"];
+        console.log("it's preferenceElicitation");
 
         var t1_desc = metadata[0][0];
         var t1_url = metadata[0][1];
@@ -150,6 +152,12 @@ function playSong(desc, url) {
     botSays(desc);
     addSong(url);
     $('audio:last').get(0).preload = "auto"; // intend to play through
+    // pause it after 10 seconds
+    $('audio:last').get(0).addEventListener("timeupdate", function() {
+      if (this.currentTime > 10) {
+        this.pause();
+      }
+    });
     $("audio:last").on('ended pause', resolve);
   });
 }
@@ -166,6 +174,12 @@ function replaySong(audioElemIndex) {
     track.currentTime = 0;
     track.play();
     playingStage = true;
+    // pause it after 10 seconds
+    track.addEventListener("timeupdate", function() {
+      if (this.currentTime > 10) {
+        this.pause();
+      }
+    });
     $(track).on('ended pause', resolve);
   });
 }
@@ -173,9 +187,7 @@ function replaySong(audioElemIndex) {
 // #######################
 // #  M A I N   F U N C  #
 // #######################
-
 document.addEventListener("DOMContentLoaded", function(event) {
-
   // check for compatibility
   if ((!isChrome()) || (!('speechSynthesis' in window)) || (!('webkitSpeechRecognition' in window))) {
     alert("This browser is incompatible.")
@@ -207,7 +219,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
     // For continuous speech, the results come as a list
     var lastResult = ev.results.length - 1;
     recognizedText = ev["results"][lastResult][0]["transcript"];
-
     handleInput(recognizedText, apiClient);
   };
 

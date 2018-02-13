@@ -1,7 +1,14 @@
+"""
+This file takes only two of the song features and creates a model based on
+if the second feature for t1 is larger than second feature for t2.
+Just a proof of correctness for the algorithm.
+"""
+
 import GPy
 from dataset_processing import *
 import spotify
-
+from sklearn.metrics import confusion_matrix
+from matplotlib import pyplot as plt
 import vlc
 import time
 
@@ -64,9 +71,10 @@ def generateNewTrackOffline(dataset, listOfTracks):
     listOfTracks += [track]
     return track
 
-#####################################
-# O F F L I N E   A L G O R I T H M #
-#####################################
+
+
+
+
 
 
 # read in the dataset from a file
@@ -75,50 +83,27 @@ data = read_stored_data('library_trimmed.data')
 trackPairs = []
 
 tracksSeen = []
-Xnew = np.zeros((1, 2 * 25))
+Xnew = np.zeros((1, 2 * 2))
 Ynew = np.array([0])
 
 for i in range(10):
-    ## Offline
-    # t1 = generateNewTrackOffline(data, tracksSeen)
-    # t2 = generateNewTrackOffline(data, tracksSeen)
-
-    tracks = getTracks(data, tracksSeen)
-    t1 = tracks[0][0]
-    t2 = tracks[1][0]
-    t1_url = tracks[0][1]
-    t2_url = tracks[1][1]
+    t1 = generateNewTrackOffline(data, tracksSeen)
+    t2 = generateNewTrackOffline(data, tracksSeen)
     t1_attr = getAttributes(t1)
     t2_attr = getAttributes(t2)
+    t1_attr = t1_attr[:2]
+    t2_attr = t2_attr[:2]
 
     Xnew = np.vstack((Xnew, np.hstack((t1_attr, t2_attr))))
 
-    print "Say which of these two you prefer:"
-
-    print "0: '" + t1[2] + "' by " + t1[1]
-    # playTrack(t1_url)
-
-    print "1: '" + t2[2] + "' by " + t2[1]
-    # playTrack(t2_url)
-
-    print "> ",
-    preference = int(raw_input())
-
-    if preference is 0:
-        preference = 1
-    elif preference is 1:
-        preference = -1
+    if t1_attr[1] > t2_attr[1]:
+        Ynew = np.vstack((Ynew, 1))
     else:
-        print "No."
-        exit()
+        Ynew = np.vstack((Ynew, -1))
 
-    ## Offline
-    # Ynew = np.vstack((Ynew, np.random.choice([-1, 1])))
-
-    Ynew = np.vstack((Ynew, preference))
     tracksSeen.extend((t1, t2))     # remove for Offline
 
-    trackPairs += [(t1[2], t2[2])]
+    trackPairs += [(str(t1_attr), str(t2_attr))]
 
 Ytrain = Ynew[1:]
 Xtrain = Xnew[1:]
@@ -128,15 +113,26 @@ Xtrain = Xnew[1:]
 #########
 
 testPairs = []
-Xnew = np.zeros((1, 2 * 25))
+Xnew = np.zeros((1, 2 * 2))
+Ynew = np.array([0])
+
 for i in range(1, len(data)):
     t1_attr = getAttributes(data[i-1])
     t2_attr = getAttributes(data[i])
+    t1_attr = t1_attr[:2]
+    t2_attr = t2_attr[:2]
 
     Xnew = np.vstack((Xnew, np.hstack((t1_attr, t2_attr))))
-    testPairs += [(data[i-1][2], data[i][2])]
+
+    if t1_attr[1] > t2_attr[1]:
+        Ynew = np.vstack((Ynew, 1))
+    else:
+        Ynew = np.vstack((Ynew, -1))
+
+    testPairs += [(str(t1_attr), str(t2_attr))]
 
 Xtest = Xnew[1:]
+Ytest = Ynew[1:]
 
 likelihood = GPy.likelihoods.Bernoulli()
 laplace_inf = GPy.inference.latent_function_inference.Laplace()
@@ -165,10 +161,6 @@ print cumsum[maximum_index]
 print data[maximum_index][2]
 print
 
-winner = data[maximum_index]
-winner_url = spotify.querySpotifyUrl(winner)
-playTrack(winner_url)
-
 
 p_ystar_xstar, dum = m.predict(Xtest, full_cov=False)
 
@@ -176,3 +168,43 @@ dec = np.hstack((testPairs, p_ystar_xstar))
 
 print "Matrix holding the X, Y, p(y=1|x) for the test points"
 print dec
+
+# Plot the eval function
+fig, axes = plt.subplots(1, 1)
+fig.suptitle(
+    'Predictive mean for f which is a difference: $\mathbb{E}(f(x^*))$', fontsize=20)
+fig.set_size_inches(2.54 * 3., 2.54 * 3.)
+plt.plot(E_fstar)
+plt.show()
+
+#
+fig, axes = plt.subplots(1, 1)
+fig.set_size_inches(2.54 * 3., 2.54 * 3.)
+fig.suptitle(
+    'Predictive mean for the sliced: $\mathbb{E}(f_{sliced}(x^*))$', fontsize=20)
+axes.set_xlabel('$x$', fontsize=16)
+axes.set_ylabel('$f(x)$', fontsize=16)
+for i in range(0, 10):
+    plt.plot(E_fstar[0 + i * 10:10 + i * 10], label='Line 2')
+
+plt.show()
+
+# Probablistic predictions
+fig, axes = plt.subplots(1, 1)
+fig.suptitle('$p(y^*|x^*)$', fontsize=20)
+axes.set_xlabel('Index of, $x^*$, i.e. a comparison', fontsize=16)
+axes.set_ylabel('$p(y^*|x^*)$', fontsize=16)
+fig.set_size_inches(2.54 * 3., 2.54 * 3.)
+im = plt.plot(p_ystar_xstar)
+plt.show()
+
+
+# Confusion matrix
+Ypred = p_ystar_xstar > 0.5
+for i in range(len(Ytest)):
+    if Ytest[i] == -1:
+        Ytest[i] = 0
+
+a = confusion_matrix(Ytest, Ypred)
+
+print a

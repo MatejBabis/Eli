@@ -100,7 +100,7 @@ hr.fadeout {
 #conversation {
    width: 390px;
    padding: 0 5px;
-   height: calc(100% - 165px);
+   height: calc(100% - 196px);
    overflow-y: auto;
 }
 

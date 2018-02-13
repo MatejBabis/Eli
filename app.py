@@ -15,6 +15,7 @@ from flask import request
 from flask import make_response
 from flask import render_template
 from flask import current_app
+from flask import send_from_directory
 
 # Flask app should start in global layout
 app = Flask(__name__, static_url_path='')
@@ -25,6 +26,11 @@ def index():
     # model instantiation
     current_app.model = model.Interface()
     return render_template("index.html")
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                          'favicon.ico',mimetype='image/vnd.microsoft.icon')
 
 @app.route('/blank')
 def showSignUp():
