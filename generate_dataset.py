@@ -1,35 +1,17 @@
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
 from dataset_processing import *
 
-client_credentials_manager = SpotifyClientCredentials(
-    client_id="d31b8fce2ead4943b1408cf3ba6f98bb",
-    client_secret="08d00abdbb2b4f39891db99880dc819a")
-sp = spotipy.Spotify(
-    client_credentials_manager=client_credentials_manager)
+data = read_stored_data("hotttnesss.txt")
 
-genre_file = "msd-topMAGD-genreAssignment.txt"
+only_valid = []
+for l in data:
+    if l[3] == l[3]:
+        only_valid += [[str(l[0]), str(l[1]), str(l[2]), float(l[3])]]
 
+only_valid.sort(key=lambda x: x[3], reverse=True)
 
+fw = open("tracks_with_hotttnesss.txt", 'wb')
 
-for line in open('genre_file.txt'):
+for l in only_valid:
+    fw.write(l[0] + "\t" + l[1] + "\t" + l[2] + "\t" + str(l[3]) + "\n")
 
-
-
-# Pop/Rock	238786
-# Electronic	41075
-# Rap	20939
-# Jazz	17836
-# R&B 14335
-
-genres = {"Pop_Rock": 0, "Electronic": 0, "Rap": 0, "Jazz": 0, "RnB": 0}
-
-for track in data:
-    t_id = track[1]
-    print track
-    break;
-
-
-# x = sp.search(q=test, limit=1)
-#
-# print x
+fw.close()

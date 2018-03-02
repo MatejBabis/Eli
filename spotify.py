@@ -1,6 +1,7 @@
 import spotipy
 from datetime import timedelta
 from spotipy.oauth2 import SpotifyClientCredentials
+import re
 
 
 def makeSpotifyQuery(req):
@@ -49,9 +50,6 @@ def songsMetadata(searchResults, query):
             "length": length,
             "preview_url": song["preview_url"]
         }]
-
-    # TODO: USE 'query' TO CHECK IF OUTPUT ACTUALLY CONTAINS DESIRED SONG
-
     return output
 
 
@@ -62,8 +60,9 @@ def querySpotifyUrl(track):
     artist = track[1]
     song = track[2]
 
-    # construct Spotify query
-    spotify_query = artist + " " + song
+    # construct Spotify query; remove things within brackets
+    #   these usually mess up the search: things like e.g. "[Album version]"
+    spotify_query = re.sub("[\(\[].*?[\)\]]", "", artist + " " + song)
     spotify_query_result = sp.search(q=spotify_query, limit=1)
 
     # Check if song exists on Spotify

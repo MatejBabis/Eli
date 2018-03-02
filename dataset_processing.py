@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pickle
 import sys
+import random
 
 # path to the Million Song Dataset subset (uncompressed)
 msd_subset_path = '/Volumes/Alakazam/_l4p/MillionSongSubset'
@@ -56,10 +57,6 @@ def func_to_extract_data_all(filename):
 
     h5 = GETTERS.open_h5_file_read(filename)
 
-    # TODO: REMOVE
-    print foo.counter
-    foo()
-
     track_id = GETTERS.get_track_id(h5)
     artist = GETTERS.get_artist_name(h5)
     title = GETTERS.get_title(h5)
@@ -111,5 +108,59 @@ def store_data_in_file(l, filename):
 def read_stored_data(filename):
     fd = open(filename, 'rb')
     dataset = pickle.load(fd)
-    print "Dataset succesfully loaded."
+    print "File '" + filename + "' successfully loaded."
     return dataset
+
+def generate_hot_examples(data):
+    f = open("hot_genre_spotify.txt", 'r')
+    lines = f.readlines()
+    f.close()
+
+    dict = {"Pop_Rock": [], "Electronic": [],
+            "Rap": [], "Jazz": [], "RnB": []}
+
+    hot_track_urls = {}
+    hot_track_genres = {}
+
+    for line in lines:
+        line = line[:-1].split("\t")
+        t_id = line[0]
+        t_genre = line[1]
+        dict[t_genre] += [t_id]
+
+        # also store id and url for convenience
+        t_url = line[2]
+        hot_track_urls[t_id] = t_url
+        # also store genre for convenience
+        hot_track_genres[t_id] = t_genre
+
+    # trainingSet Track IDs
+    trainingSet = []
+    testingSet = []
+    for i in dict.keys():
+        trainingSet.extend(dict[i][:10])
+        testingSet.extend(dict[i][10:])
+
+    for i in range(len(trainingSet)):
+        for track in data:
+            if trainingSet[i] == track[0]:
+                trainingSet[i] = track
+                continue
+
+    for i in range(len(testingSet)):
+        for track in data:
+            if testingSet[i] == track[0]:
+                testingSet[i] = track
+                continue
+
+    # so that we don't have the comparisons in order
+    random.shuffle(trainingSet)
+    random.shuffle(testingSet)
+
+    store_data_in_file(trainingSet, 'hot_training_set.data')
+    store_data_in_file(testingSet, 'hot_testing_set.data')
+    store_data_in_file(hot_track_urls, 'hot_track_urls.data')
+    store_data_in_file(hot_track_genres, 'hot_track_genres.data')
+
+
+

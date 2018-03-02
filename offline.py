@@ -1,9 +1,11 @@
 import GPy
 from dataset_processing import *
 import spotify
+from sklearn import preprocessing
 
 import vlc
 import time
+
 
 # get song attributes as a vector
 def getAttributes(track):
@@ -21,104 +23,120 @@ def playTrack(url):
     p.stop()
 
 
-# pick a previously unseen random track
-def generateNewTrack(dataset, listOfTracks):
-    track = dataset[int(np.random.rand() * len(dataset))]
-    while track in listOfTracks:
-        track = dataset[int(np.random.rand() * len(dataset))]
-    return track
-
-
-# choose two random tracks with 2 conditions:
-#   1: make sure user hasn't rated any of them yet
-#   2: make sure they exist on Spotify
-# returns a tuple of tuples containing 2 tracks, each of which
-# is a tuple consisting of metadata and Spotify url
-def getTracks(dataset, listOfTracks):
-    track1 = generateNewTrack(dataset, listOfTracks)
-    track2 = generateNewTrack(dataset, listOfTracks)
-
-    track1_url = spotify.querySpotifyUrl(track1)
-    track2_url = spotify.querySpotifyUrl(track2)
-
-    # loop if & until a Spotify-friendly tracks are found
-    while (track1_url is None) or (track1[2] is track2[2]):
-        track1 = generateNewTrack(dataset, listOfTracks)
-        track1_url = spotify.querySpotifyUrl(track1)
-    listOfTracks += [track1]
-
-    # also make sure we are not comparing the same songs
-    while (track2_url is None) or (track2[2] is track1[2]):
-        track2 = generateNewTrack(dataset, listOfTracks)
-        track2_url = spotify.querySpotifyUrl(track2)
-    listOfTracks += [track2]
-
-    return (track1, track1_url), (track2, track2_url)
-
-# Offline equivalent of the function above so that we don't
-# have to query Spotify
-def generateNewTrackOffline(dataset, listOfTracks):
-    track = dataset[int(np.random.rand() * len(dataset))]
-    while track in listOfTracks:
-        track = dataset[int(np.random.rand() * len(dataset))]
-    listOfTracks += [track]
-    return track
-
 #####################################
 # O F F L I N E   A L G O R I T H M #
 #####################################
 
+# # read in the old dataset from a file
+# data = read_stored_data('library.data')
 
-# read in the dataset from a file
-data = read_stored_data('library_trimmed.data')
+# run this if hotttnesss dataset has changed
+# generate_hot_examples(data)
 
-trackPairs = []
+trainingDataset = read_stored_data('hot_training_set.data')     # query the user on this
+testingDataset = read_stored_data('hot_testing_set.data')       # give recommendation from this
+hotTrackUrls = read_stored_data('hot_track_urls.data')          # corresponding ID : URL pairs
+hotTrackGenres = read_stored_data("hot_track_genres.data")      # corresponding ID : Genre pairs
 
-tracksSeen = []
+# This block is just because of the data normalisation,
+# FIXME: Will be done in pre-processing and therefore removed
+dataset = trainingDataset + testingDataset
+dataset_attr = np.zeros((1, 25))
+for track in dataset:
+    track_attr = getAttributes(track)
+    dataset_attr = np.vstack((dataset_attr, np.hstack(track_attr)))
+# standardize the inputs, i.e. scaled data now has 0 mean and unit variance
+dataset_attr = preprocessing.scale(dataset_attr[1:])
+trainingDataset_attr = dataset_attr[:50]
+testingDataset_attr = dataset_attr[50:]
+for i in range(len(trainingDataset)):
+    trainingDataset[i] = [trainingDataset[i][0], trainingDataset[i][1], trainingDataset[i][2], trainingDataset_attr[i]]
+for i in range(len(testingDataset)):
+    testingDataset[i] = [testingDataset[i][0], testingDataset[i][1], testingDataset[i][2], testingDataset_attr[i]]
+
+# This block is for testing - when we want to compare clusters of same genres
+# FIXME: TEMPORARILY CLUSTER THE PAIRS INTO GENRES
+# genre_dict = {"Pop_Rock": [], "Electronic": [],
+#               "Rap": [], "Jazz": [], "RnB": []}
+# for i in range(len(trainingDataset)):
+#     genre_dict[hotTrackGenres[trainingDataset[i][0]]] += [trainingDataset[i]]
+# trainingDataset = []
+# for genre in genre_dict.keys():
+#     for track in genre_dict[genre]:
+#         trainingDataset += [track]
+genre_dict = {"Pop_Rock": [], "Electronic": [],
+              "Rap": [], "Jazz": [], "RnB": []}
+for i in range(len(dataset)):
+    genre_dict[hotTrackGenres[dataset[i][0]]] += [dataset[i]]
+genre_dataset = np.zeros((1, 12))
+dict_keys =  genre_dict.keys()
+print dict_keys
+for genre in dict_keys:
+    for track in genre_dict[genre]:
+        genre_dataset = np.vstack((genre_dataset, np.hstack((track[3]))))
+genre_dataset = genre_dataset[1:]
+# standardize the inputs, i.e. scaled data now has 0 mean and unit variance
+dataset_attr = preprocessing.scale(genre_dataset[1:])
+
+# store pairs seen in training phase
+trainingPairs = []
+
 Xnew = np.zeros((1, 2 * 25))
 Ynew = np.array([0])
 
-for i in range(10):
-    ## Offline
-    # t1 = generateNewTrackOffline(data, tracksSeen)
-    # t2 = generateNewTrackOffline(data, tracksSeen)
+trainingSet = []
+# generate pairs on the main diagonal
+for i in range(1, len(trainingDataset)):
+    trainingSet += [(trainingDataset[i-1], trainingDataset[i])]
+# link the first one with the last one
+trainingSet += [(trainingDataset[0], trainingDataset[len(trainingDataset)-1])]
+# generate pairs on the 8-off diagonal
+for i in range(8, len(trainingDataset)):
+    trainingSet += [(trainingDataset[i-8], trainingDataset[i])]
 
-    tracks = getTracks(data, tracksSeen)
-    t1 = tracks[0][0]
-    t2 = tracks[1][0]
-    t1_url = tracks[0][1]
-    t2_url = tracks[1][1]
-    t1_attr = getAttributes(t1)
-    t2_attr = getAttributes(t2)
+
+# TODO: INCLUDE COUPLE OF PAIRS MULTIPLE TIMES, TO CHECK USER'S ABILITY TO RATE
+for tuple in trainingSet:
+    t1 = tuple[0]                   # track1
+    t2 = tuple[1]                   # track2
+    # t1_attr = getAttributes(t1)     # corresponding attributes
+    # t2_attr = getAttributes(t2)
+    t1_attr = t1[3]
+    t2_attr = t2[3]
 
     Xnew = np.vstack((Xnew, np.hstack((t1_attr, t2_attr))))
-
+    # User elicitation
     print "Say which of these two you prefer:"
 
     print "0: '" + t1[2] + "' by " + t1[1]
-    # playTrack(t1_url)
+    # playTrack(hotTrackUrls[t1[0]])
 
     print "1: '" + t2[2] + "' by " + t2[1]
-    # playTrack(t2_url)
+    # playTrack(hotTrackUrls[t2[0]])
 
-    print "> ",
-    preference = int(raw_input())
+    # Eliciting response from a user
+    # while True:
+    #     print "> ",
+    #     userPreference = raw_input()
+    #     if userPreference == "0" or userPreference == "1":
+    #         break
+    #     else:
+    #         print "Not a valid preference. Try again"
+    #         continue
 
-    if preference is 0:
-        preference = 1
-    elif preference is 1:
-        preference = -1
+    # automated response - always prefer tracks the tracks
+    # with a genre appearing earlier in the list
+    pref = ["Rap", "Pop_Rock", "Electronic", "Jazz", "RnB"]
+    if pref.index(hotTrackGenres[t1[0]]) <= pref.index(hotTrackGenres[t2[0]]):
+        userPreference = 0
     else:
-        print "No."
-        exit()
+        userPreference = 1
+    print ">", str(userPreference)
 
-    ## Offline
-    # Ynew = np.vstack((Ynew, np.random.choice([-1, 1])))
+    # store preference value (either 0 or 1)
+    Ynew = np.vstack((Ynew, int(userPreference)))
 
-    Ynew = np.vstack((Ynew, preference))
-    tracksSeen.extend((t1, t2))     # remove for Offline
-
-    trackPairs += [(t1[2], t2[2])]
+    trainingPairs += [(t1[2], t2[2])]
 
 Ytrain = Ynew[1:]
 Xtrain = Xnew[1:]
@@ -128,13 +146,18 @@ Xtrain = Xnew[1:]
 #########
 
 testPairs = []
+
 Xnew = np.zeros((1, 2 * 25))
-for i in range(1, len(data)):
-    t1_attr = getAttributes(data[i-1])
-    t2_attr = getAttributes(data[i])
+
+# create a chained list for the testing data
+for i in range(1, len(testingDataset)):
+    # t1_attr = getAttributes(testingDataset[i-1])
+    # t2_attr = getAttributes(testingDataset[i])
+    t1_attr = testingDataset[i-1][3]
+    t2_attr = testingDataset[i][3]
 
     Xnew = np.vstack((Xnew, np.hstack((t1_attr, t2_attr))))
-    testPairs += [(data[i-1][2], data[i][2])]
+    testPairs += [(testingDataset[i-1][2], testingDataset[i][2])]
 
 Xtest = Xnew[1:]
 
@@ -144,35 +167,62 @@ laplace_inf = GPy.inference.latent_function_inference.Laplace()
 # we use a PJK kernel with RBF base,
 # i.e. a length scale and a variance parameter
 kernel = GPy.kern.PjkRbf(Xtrain.shape[1])
-kernel.variance = np.sqrt(2)
-kernel.lengthscale = 0.5
+kernel.variance = 2.7
+kernel.lengthscale = 2.4
 
-# Model definition
 m = GPy.core.GP(Xtrain, Ytrain, kernel=kernel, likelihood=likelihood,
                 inference_method=laplace_inf)
-
 print m
+print m.log_likelihood()
+
+# This block tests increasing lengthscale parameter to find the converging value
+from matplotlib import pyplot as plt
+lengthscales = [1, 2, 2.5, 3.2]
+for l in lengthscales:
+    kernel.lengthscale = l
+    k = kernel._RbfBase_K(dataset_attr)
+    imgplot = plt.imshow(k)
+    imgplot.set_interpolation('none')
+    plt.text(10, 80, "lengthscale: " + str(l), bbox=dict(facecolor='white', alpha=0.5))
+    plt.show()
+    # # Model definition
+    # m = GPy.core.GP(Xtrain, Ytrain, kernel=kernel, likelihood=likelihood,
+    #                 inference_method=laplace_inf)
+    # # print m
+    # print temp, m.log_likelihood()
+    # # print
+
+
+#TODO: CROSS-VALIDATION
+
+results = []
 
 E_fstar, V_fstar = m.predict_f(Xtest, full_cov=True)
 
 cumsum = np.cumsum(E_fstar)
 # everything is calibrated with respect to 0, so prepend 0
 cumsum = np.insert(cumsum, 0, 0, axis=0)
-print cumsum
 
-maximum_index = np.argmax(cumsum)
-print cumsum[maximum_index]
-print data[maximum_index][2]
-print
+# create (Track, Delta) tuples
+delta_track = []
+for i in range(len(cumsum)):
+    delta_track += [(testingDataset[i], cumsum[i])]
 
-winner = data[maximum_index]
-winner_url = spotify.querySpotifyUrl(winner)
-playTrack(winner_url)
+# sort the list based on the delta
+delta_track.sort(key=lambda x: x[1], reverse=True)
+# print the 10 most popular ones
+print "\nRecommendations:"
+for i in range(10):
+    print delta_track[i][0][1] + " " + delta_track[i][0][2],    # name
+    print "    Genre: " + hotTrackGenres[delta_track[i][0][0]], delta_track[i][1]
 
+    # play the track
+    # url = spotify.querySpotifyUrl(delta_track[i][0])
+    # playTrack(url)
 
-p_ystar_xstar, dum = m.predict(Xtest, full_cov=False)
-
-dec = np.hstack((testPairs, p_ystar_xstar))
-
-print "Matrix holding the X, Y, p(y=1|x) for the test points"
-print dec
+# p_ystar_xstar, dum = m.predict(Xtest, full_cov=False)
+#
+# dec = np.hstack((testPairs, p_ystar_xstar))
+#
+# print "Matrix holding a Pair of songs and associated p(y=1|x)"
+# print dec
