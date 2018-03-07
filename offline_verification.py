@@ -6,7 +6,7 @@ Just a proof of correctness for the algorithm.
 
 import GPy
 from dataset_processing import *
-import spotify
+import audio
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 import vlc
@@ -45,19 +45,19 @@ def getTracks(dataset, listOfTracks):
     track1 = generateNewTrack(dataset, listOfTracks)
     track2 = generateNewTrack(dataset, listOfTracks)
 
-    track1_url = spotify.querySpotifyUrl(track1)
-    track2_url = spotify.querySpotifyUrl(track2)
+    track1_url = audio.querySpotifyUrl(track1)
+    track2_url = audio.querySpotifyUrl(track2)
 
     # loop if & until a Spotify-friendly tracks are found
     while (track1_url is None) or (track1[2] is track2[2]):
         track1 = generateNewTrack(dataset, listOfTracks)
-        track1_url = spotify.querySpotifyUrl(track1)
+        track1_url = audio.querySpotifyUrl(track1)
     listOfTracks += [track1]
 
     # also make sure we are not comparing the same songs
     while (track2_url is None) or (track2[2] is track1[2]):
         track2 = generateNewTrack(dataset, listOfTracks)
-        track2_url = spotify.querySpotifyUrl(track2)
+        track2_url = audio.querySpotifyUrl(track2)
     listOfTracks += [track2]
 
     return (track1, track1_url), (track2, track2_url)
@@ -83,7 +83,7 @@ data = read_stored_data('library_trimmed.data')
 trackPairs = []
 
 tracksSeen = []
-Xnew = np.zeros((1, 2 * 2))
+Xnew = np.zeros((1, 2))
 Ynew = np.array([0])
 
 for i in range(10):
@@ -91,15 +91,15 @@ for i in range(10):
     t2 = generateNewTrackOffline(data, tracksSeen)
     t1_attr = getAttributes(t1)
     t2_attr = getAttributes(t2)
-    t1_attr = t1_attr[:2]
-    t2_attr = t2_attr[:2]
+    t1_attr = t1_attr[:1]
+    t2_attr = t2_attr[:1]
 
     Xnew = np.vstack((Xnew, np.hstack((t1_attr, t2_attr))))
 
-    if t1_attr[1] > t2_attr[1]:
-        Ynew = np.vstack((Ynew, 1))
+    if t1_attr[0] > t2_attr[0]:
+        Ynew = np.vstack((Ynew, 0))
     else:
-        Ynew = np.vstack((Ynew, -1))
+        Ynew = np.vstack((Ynew, 1))
 
     tracksSeen.extend((t1, t2))     # remove for Offline
 
@@ -113,21 +113,21 @@ Xtrain = Xnew[1:]
 #########
 
 testPairs = []
-Xnew = np.zeros((1, 2 * 2))
+Xnew = np.zeros((1, 2))
 Ynew = np.array([0])
 
 for i in range(1, len(data)):
     t1_attr = getAttributes(data[i-1])
     t2_attr = getAttributes(data[i])
-    t1_attr = t1_attr[:2]
-    t2_attr = t2_attr[:2]
+    t1_attr = t1_attr[:1]
+    t2_attr = t2_attr[:1]
 
     Xnew = np.vstack((Xnew, np.hstack((t1_attr, t2_attr))))
 
-    if t1_attr[1] > t2_attr[1]:
-        Ynew = np.vstack((Ynew, 1))
+    if t1_attr[0] > t2_attr[0]:
+        Ynew = np.vstack((Ynew, 0))
     else:
-        Ynew = np.vstack((Ynew, -1))
+        Ynew = np.vstack((Ynew, 1))
 
     testPairs += [(str(t1_attr), str(t2_attr))]
 
@@ -151,17 +151,6 @@ print m
 
 E_fstar, V_fstar = m.predict_f(Xtest, full_cov=True)
 
-cumsum = np.cumsum(E_fstar)
-# everything is calibrated with respect to 0, so prepend 0
-cumsum = np.insert(cumsum, 0, 0, axis=0)
-print cumsum
-
-maximum_index = np.argmax(cumsum)
-print cumsum[maximum_index]
-print data[maximum_index][2]
-print
-
-
 p_ystar_xstar, dum = m.predict(Xtest, full_cov=False)
 
 dec = np.hstack((testPairs, p_ystar_xstar))
@@ -177,7 +166,6 @@ fig.set_size_inches(2.54 * 3., 2.54 * 3.)
 plt.plot(E_fstar)
 plt.show()
 
-#
 fig, axes = plt.subplots(1, 1)
 fig.set_size_inches(2.54 * 3., 2.54 * 3.)
 fig.suptitle(

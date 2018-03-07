@@ -1,6 +1,7 @@
 venv
 ngrok
 msd-topMAGD-genreAssignment.txt
+logs
 
 *.pyc
 *.data
