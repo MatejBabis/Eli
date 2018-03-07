@@ -50,6 +50,10 @@ function handleInput(userText, dialogflowClient) {
       .catch(handleError);
 
     function handleResponse(serverResponse) {
+
+      // TODO: SAY "THIS MIGHT TAKE A COUPLE OF MOMENTS"
+
+
       // say the response
       var speech = serverResponse["result"]["fulfillment"]["speech"];
       var msg = new SpeechSynthesisUtterance(speech);
@@ -59,11 +63,9 @@ function handleInput(userText, dialogflowClient) {
       window.speechSynthesis.speak(msg);
 
       response = serverResponse["result"]["action"];
-      console.log("got a response");
       // Give me two songs
       if (response == "preferenceElicitation") {
         var metadata = serverResponse["result"]["fulfillment"]["data"];
-        console.log("it's preferenceElicitation");
 
         var t1_desc = metadata[0][0];
         var t1_url = metadata[0][1];
@@ -95,7 +97,62 @@ function handleInput(userText, dialogflowClient) {
             })
           }
         }
+      } else if (response == "recommendation") {
+        var metadata = serverResponse["result"]["fulfillment"]["data"]
+        if (metadata != null) {
+          // ugly, I know...
+          var t1_desc = metadata[0][0];
+          var t1_url = metadata[0][1];
+          var t2_desc = metadata[1][0];
+          var t2_url = metadata[1][1];
+          var t3_desc = metadata[2][0];
+          var t3_url = metadata[2][1];
+          var t4_desc = metadata[3][0];
+          var t4_url = metadata[3][1];
+          var t5_desc = metadata[4][0];
+          var t5_url = metadata[4][1];
+          var t6_desc = metadata[5][0];
+          var t6_url = metadata[5][1];
+          var t7_desc = metadata[6][0];
+          var t7_url = metadata[6][1];
+          var t8_desc = metadata[7][0];
+          var t8_url = metadata[7][1];
+          var t9_desc = metadata[8][0];
+          var t9_url = metadata[8][1];
+          var t10_desc = metadata[9][0];
+          var t10_url = metadata[9][1];
+
+          // disgusting, I'm sorry...
+          msg.onend = function() {
+            playSong(t1_desc, t1_url).then(function() {
+              playSong(t2_desc, t2_url).then(function() {
+                playSong(t3_desc, t3_url).then(function() {
+                  playSong(t4_desc, t4_url).then(function() {
+                    playSong(t5_desc, t5_url).then(function() {
+                      playSong(t6_desc, t6_url).then(function() {
+                        playSong(t7_desc, t7_url).then(function() {
+                          playSong(t8_desc, t8_url).then(function() {
+                            playSong(t9_desc, t9_url).then(function() {
+                              playSong(t10_desc, t10_url).then(function() {
+                                playingStage = false;
+                                var question = "Thank you for using Eli.";
+                                msg = new SpeechSynthesisUtterance(question);
+                                botSays(question);
+                                window.speechSynthesis.speak(msg);
+                              })
+                            })
+                          })
+                        })
+                      })
+                    })
+                  })
+                })
+              })
+            })
+          }
+        }
       }
+
     }
 
     function handleError(serverError) {

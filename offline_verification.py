@@ -6,7 +6,7 @@ Just a proof of correctness for the algorithm.
 
 import GPy
 from dataset_processing import *
-import spotify
+import audio
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 import vlc
@@ -45,19 +45,19 @@ def getTracks(dataset, listOfTracks):
     track1 = generateNewTrack(dataset, listOfTracks)
     track2 = generateNewTrack(dataset, listOfTracks)
 
-    track1_url = spotify.querySpotifyUrl(track1)
-    track2_url = spotify.querySpotifyUrl(track2)
+    track1_url = audio.querySpotifyUrl(track1)
+    track2_url = audio.querySpotifyUrl(track2)
 
     # loop if & until a Spotify-friendly tracks are found
     while (track1_url is None) or (track1[2] is track2[2]):
         track1 = generateNewTrack(dataset, listOfTracks)
-        track1_url = spotify.querySpotifyUrl(track1)
+        track1_url = audio.querySpotifyUrl(track1)
     listOfTracks += [track1]
 
     # also make sure we are not comparing the same songs
     while (track2_url is None) or (track2[2] is track1[2]):
         track2 = generateNewTrack(dataset, listOfTracks)
-        track2_url = spotify.querySpotifyUrl(track2)
+        track2_url = audio.querySpotifyUrl(track2)
     listOfTracks += [track2]
 
     return (track1, track1_url), (track2, track2_url)
