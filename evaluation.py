@@ -17,7 +17,28 @@ def compute_kernel_matrix(data, enable):
         kernel_matrix = kernel._RbfBase_K(data_attr)
         imgplot = plt.imshow(kernel_matrix)
         imgplot.set_interpolation('none')
-        plt.text(10, 80, "lengthscale: " + str(kernel.lengthscale[0]), bbox=dict(facecolor='white', alpha=0.5))
+
+        # red lines
+        plt.plot([0, 20], [0, 0], color='red', lw=1)
+        plt.plot([0, 0], [20, 0], color='red', lw=1)
+        plt.plot([20, 20], [0, 40], color='red', lw=1)
+        plt.plot([0, 40], [20, 20], color='red', lw=1)
+        plt.plot([40, 40], [20, 60], color='red', lw=1)
+        plt.plot([20, 60], [40, 40], color='red', lw=1)
+        plt.plot([60, 60], [40, 80], color='red', lw=1)
+        plt.plot([40, 80], [60, 60], color='red', lw=1)
+        plt.plot([80, 80], [60, 99], color='red', lw=1)
+        plt.plot([60, 99], [80, 80], color='red', lw=1)
+        plt.plot([80, 99], [99, 99], color='red', lw=1)
+        plt.plot([99, 99], [80, 99], color='red', lw=1)
+
+        # cluster text
+        plt.text(22, 5, "rap", color='red')
+        plt.text(2, 37, "classical", color='red')
+        plt.text(28, 57, "blues", color='red')
+        plt.text(48, 77, "metal", color='red')
+        plt.text(68, 97, "disco", color='red')
+
         plt.show()
 
 
@@ -30,7 +51,7 @@ def pair_preference_prediction(testPairs, p_ystar_xstar):
 def compute_confusion_matrix(Ytest, p_ystar_xstar):
     Ypred = p_ystar_xstar > 0.5
     print "\nConfusion matrix:"
-    print confusion_matrix(Ytest, Ypred)
+    return confusion_matrix(Ytest, Ypred)
 
 
 def compute_accuracy_score(Ytest, p_ystar_xstar):
@@ -41,15 +62,12 @@ def compute_accuracy_score(Ytest, p_ystar_xstar):
 def compute_ROC_curve(Ytest, p_ystar_xstar):
     Ypred = p_ystar_xstar
 
-    fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
-    for i in range(2):
-        fpr[i], tpr[i], _ = roc_curve(Ytest, Ypred)
-        roc_auc[i] = auc(fpr[i], tpr[i])
+    fpr, tpr, thresholds = roc_curve(Ytest, Ypred)
+    print thresholds
+    roc_auc = auc(fpr, tpr)
 
-    plt.plot(fpr[1], tpr[1], color='darkorange',
-             lw=2, label='ROC curve (area = %0.2f)' % roc_auc[1])
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
     plt.xlim([-0.05, 1.0])
     plt.ylim([0.0, 1.05])
@@ -58,3 +76,5 @@ def compute_ROC_curve(Ytest, p_ystar_xstar):
     plt.title('Receiver operating characteristic example')
     plt.legend(loc="lower right")
     plt.show()
+
+    return fpr, tpr, roc_auc
