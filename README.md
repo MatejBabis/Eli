@@ -21,7 +21,7 @@ Webhook: `https://projecteli.ngrok.io/`
       * Add the paid token: `./ngrok authtoken 2jfkXCKdvDiqpTogmekeM_7GmFBngKeENs4BGcoCFU8`.
 
 
-After installing the dependencies, do the following
+After installing the dependencies, do the following:
 1. Add the following function to `{YOUR_PYTHON_ROOT}/Lib/site-packages/GPy/core/gp.py`:
 ```python
 def predict_f(self, _Xnew, full_cov=False, kern=None):
@@ -35,7 +35,7 @@ from .src.pjk import PjkRbf
 ```
 
 3. Copy the `pjk.py` file into `/Lib/site-packages/GPy/kern/src/`.
-   * This is the custom covariance function
+   * This is the custom covariance function.
 
 
 ### Execute by:
@@ -44,6 +44,11 @@ from .src.pjk import PjkRbf
 > ./ngrok http -subdomain=projecteli 5000
 ```
 Now you can access [https://projecteli.ngrok.io/](https://projecteli.ngrok.io/).
+
+Alternatively, you can run the model in a shell without a front-end by executing:
+```
+> python offline.py
+```
 
 ### Bug list
 * Sometimes no tracks are played after requesting a song pair.

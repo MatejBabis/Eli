@@ -113,7 +113,7 @@ def hyperparameter_optimization(kernel, likelihood, inference, evaluation, Xtrai
 ###########################################################################
 
 np.random.seed(1337)    # to ensure shuffling is constant for all users
-evalMode = True         # enable for evaluation information
+evalMode = False         # enable for evaluation information
 
 data = dataset_processing.alternative_read_stored_data("final_data_standardized")
 
@@ -146,7 +146,7 @@ np.random.shuffle(trainPairs)
 # as opposed to letting the user rank the pairs
 automated = True
 # Represent the order of preferences for automated responses
-pref = ["blues", "rap", "classical", "metal", "disco"]
+pref = ["metal", "rap", "classical", "blues", "disco"]
 
 Xtrain, Ytrain = process_training_data(trainPairs, pref, automated)
 

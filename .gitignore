@@ -3,6 +3,7 @@ ngrok
 msd-topMAGD-genreAssignment.txt
 logs
 
+offline_verification.py
 overall_accuracy.py
 *.pyc
 *.data
