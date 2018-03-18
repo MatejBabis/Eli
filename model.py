@@ -213,7 +213,7 @@ class Model:
         experimentRecommendations += recommendations
 
         # print them as well
-        log.info("\nExperimental 'recommendations':")
+        log.info("\nExperimental 'recommendations' (not in the order presented):")
         for i in range(len(experimentRecommendations)):
             log.info("%s", experimentRecommendations[i][0])
 

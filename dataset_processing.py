@@ -189,5 +189,4 @@ def create_training_data(trainSet):
         trainPairs += [trainPairs[i]]
         duplicatePairs += [trainPairs[i]]
 
-    # return trainSetAttr, trainSetMeta, trainPairs, duplicatePairs
-    return trainSetAttr[:10], trainSetMeta[:10], trainPairs[:10], duplicatePairs
+    return trainSetAttr, trainSetMeta, trainPairs, duplicatePairs
