@@ -108,6 +108,9 @@ for i in range(10):
 Ytrain = Ynew[1:]
 Xtrain = Xnew[1:]
 
+for i in range(len(Xtrain)):
+    print Xtrain[i], Ytrain[i]
+
 #########
 # T E S T
 #########
@@ -147,7 +150,7 @@ kernel.lengthscale = 0.5
 m = GPy.core.GP(Xtrain, Ytrain, kernel=kernel, likelihood=likelihood,
                 inference_method=laplace_inf)
 
-print m
+# print m
 
 E_fstar, V_fstar = m.predict_f(Xtest, full_cov=True)
 
@@ -158,33 +161,33 @@ dec = np.hstack((testPairs, p_ystar_xstar))
 print "Matrix holding the X, Y, p(y=1|x) for the test points"
 print dec
 
-# Plot the eval function
-fig, axes = plt.subplots(1, 1)
-fig.suptitle(
-    'Predictive mean for f which is a difference: $\mathbb{E}(f(x^*))$', fontsize=20)
-fig.set_size_inches(2.54 * 3., 2.54 * 3.)
-plt.plot(E_fstar)
-plt.show()
-
-fig, axes = plt.subplots(1, 1)
-fig.set_size_inches(2.54 * 3., 2.54 * 3.)
-fig.suptitle(
-    'Predictive mean for the sliced: $\mathbb{E}(f_{sliced}(x^*))$', fontsize=20)
-axes.set_xlabel('$x$', fontsize=16)
-axes.set_ylabel('$f(x)$', fontsize=16)
-for i in range(0, 10):
-    plt.plot(E_fstar[0 + i * 10:10 + i * 10], label='Line 2')
-
-plt.show()
-
-# Probablistic predictions
-fig, axes = plt.subplots(1, 1)
-fig.suptitle('$p(y^*|x^*)$', fontsize=20)
-axes.set_xlabel('Index of, $x^*$, i.e. a comparison', fontsize=16)
-axes.set_ylabel('$p(y^*|x^*)$', fontsize=16)
-fig.set_size_inches(2.54 * 3., 2.54 * 3.)
-im = plt.plot(p_ystar_xstar)
-plt.show()
+# # Plot the eval function
+# fig, axes = plt.subplots(1, 1)
+# fig.suptitle(
+#     'Predictive mean for f which is a difference: $\mathbb{E}(f(x^*))$', fontsize=20)
+# fig.set_size_inches(2.54 * 3., 2.54 * 3.)
+# plt.plot(E_fstar)
+# plt.show()
+#
+# fig, axes = plt.subplots(1, 1)
+# fig.set_size_inches(2.54 * 3., 2.54 * 3.)
+# fig.suptitle(
+#     'Predictive mean for the sliced: $\mathbb{E}(f_{sliced}(x^*))$', fontsize=20)
+# axes.set_xlabel('$x$', fontsize=16)
+# axes.set_ylabel('$f(x)$', fontsize=16)
+# for i in range(0, 10):
+#     plt.plot(E_fstar[0 + i * 10:10 + i * 10], label='Line 2')
+#
+# plt.show()
+#
+# # Probablistic predictions
+# fig, axes = plt.subplots(1, 1)
+# fig.suptitle('$p(y^*|x^*)$', fontsize=20)
+# axes.set_xlabel('Index of, $x^*$, i.e. a comparison', fontsize=16)
+# axes.set_ylabel('$p(y^*|x^*)$', fontsize=16)
+# fig.set_size_inches(2.54 * 3., 2.54 * 3.)
+# im = plt.plot(p_ystar_xstar)
+# plt.show()
 
 
 # Confusion matrix

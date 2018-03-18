@@ -82,7 +82,7 @@ html {
 
 #textInput:focus{
     outline: none;
-    border-bottom: 1px solid #57C4FF;
+    /* border-bottom: 1px solid #57C4FF; */
 }
 
 #textInput::placeholder {

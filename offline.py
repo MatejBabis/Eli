@@ -65,7 +65,8 @@ def process_training_data(trainPairs, pref, automated):
 def hyperparameter_optimization(kernel, likelihood, inference, evaluation, Xtrain, Ytrain):
     # dimensions of the matrix that will hold hyperparameter
     # values within range (1:10)
-    dimension = np.arange(1.0, 10.0, 0.25)
+    # dimension = np.arange(1.0, 10.0, 0.25)
+    dimension = np.arange(1.0, 10.0, 1)
     # arbitrary large values
     minimum = 9999
     min_l = 999
@@ -86,7 +87,8 @@ def hyperparameter_optimization(kernel, likelihood, inference, evaluation, Xtrai
                 min_v = v
 
             if evaluation is True:
-                hyper_values[int(np.rint(l * 4)) - 4][int(np.rint(v * 4)) - 4] = -m.log_likelihood()
+                # hyper_values[int(np.rint(l * 4)) - 4][int(np.rint(v * 4)) - 4] = -m.log_likelihood()
+                hyper_values[int(np.rint(l)) - 1][int(np.rint(v)) - 1] = -m.log_likelihood()
 
     print "\nHyperparameter optimization completed."
     print "Minimum log likelihood estimation:", str(minimum)
@@ -94,7 +96,13 @@ def hyperparameter_optimization(kernel, likelihood, inference, evaluation, Xtrai
     print "\tlengthscale =", str(min_l) + ", variance =", str(min_v)
 
     if evaluation is True:
-        plt.imshow(hyper_values)
+        fig, ax = plt.subplots()
+        cax = ax.imshow(hyper_values)
+        ax.set_title('Log Likelihood Estimation')
+        plt.ylabel('length-scale')
+        plt.xlabel('variance')
+        cbar = fig.colorbar(cax)
+        cbar.ax.invert_yaxis()
         plt.show()
 
     return min_l, min_v
@@ -105,7 +113,7 @@ def hyperparameter_optimization(kernel, likelihood, inference, evaluation, Xtrai
 ###########################################################################
 
 np.random.seed(1337)    # to ensure shuffling is constant for all users
-evalMode = False         # enable for evaluation information
+evalMode = True         # enable for evaluation information
 
 data = dataset_processing.alternative_read_stored_data("final_data_standardized")
 
@@ -125,17 +133,11 @@ np.random.shuffle(testSet)
 ###########################
 # Training data processing
 
-trainSetAttr, trainSetMeta, trainPairs = dataset_processing.create_training_data(trainSet)
+trainSetAttr, trainSetMeta, trainPairs, _ = dataset_processing.create_training_data(trainSet)
 
 # shuffle these pairs as well so that
 # we don't present them as linked list
 np.random.shuffle(trainPairs)
-
-print trainPairs[0][0][2], trainPairs[0][2][2]
-print trainPairs[1][0][2], trainPairs[1][2][2]
-print trainPairs[2][0][2], trainPairs[2][2][2]
-exit()
-
 
 ###########################
 # TRAINING PHASE
@@ -144,7 +146,7 @@ exit()
 # as opposed to letting the user rank the pairs
 automated = True
 # Represent the order of preferences for automated responses
-pref = ["rap", "metal", "disco", "blues", "classical"]
+pref = ["blues", "rap", "classical", "metal", "disco"]
 
 Xtrain, Ytrain = process_training_data(trainPairs, pref, automated)
 
@@ -242,9 +244,13 @@ if evalMode is True:
     # Pairwise preference prediction
     evaluation.pair_preference_prediction(testPairs, p_ystar_xstar)
     # Confusion Matrix
-    evaluation.compute_confusion_matrix(Ytest, p_ystar_xstar)
+    conf = evaluation.compute_confusion_matrix(Ytest, p_ystar_xstar)
+    print conf
+
     # Accuracy score
-    print "\nAccuracy score:", evaluation.compute_accuracy_score(Ytest, p_ystar_xstar)
+    acc = evaluation.compute_accuracy_score(Ytest, p_ystar_xstar)
+    print "Accuracy score:", acc
+
     # ROC Curve
     evaluation.compute_ROC_curve(Ytest, p_ystar_xstar)
 

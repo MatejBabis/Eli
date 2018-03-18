@@ -143,9 +143,17 @@ def processRequest(req, state):
         # in case the preference was said as an ordinal
         if number == "":
             number = req.get("result").get("parameters").get("ordinal")
-        trackToReplay = int(number) - 1     # second song is indexed as 1, first as 0
+            # in case this still wasn't picked up
+            if number == "":
+                query = req.get("result").get("resolvedQuery")
+                print query
+                if "first" in query or "one" in query:
+                    number = "1"
+                elif "second" in query or "two" in query:
+                    number = "2"
 
-        if trackToReplay is 0 or trackToReplay is 1:
+        if number == "1" or number == "2":
+            trackToReplay = int(number) - 1  # second song is indexed as 1, first as 0
             return ({
                 "speech": "Replaying track number " + str(number) + ".",
                 "displayText": "Replaying track number " + str(number) + ".",
