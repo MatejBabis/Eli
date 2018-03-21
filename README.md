@@ -51,8 +51,6 @@ Alternatively, you can run the model in a shell without a front-end by executing
 ```
 
 ### Bug list
-* Sometimes no tracks are played after requesting a song pair.
+* Occasinally no response is produced for a command.
    * Response is sent from the server, so possibly a Javascript issue.
-   * __Mitigation__: Use the command again.
-* Similarly, occasionally a preference judgment is not received in the same way.
    * __Mitigation__: Use the command again.

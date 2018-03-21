@@ -93,9 +93,11 @@ if __name__ == '__main__':
 
     print("Starting app on port %d" % port)
 
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
     handler = RotatingFileHandler('logs/' + strftime('log_%H_%M_%d_%m_%Y.log'),
                                   maxBytes=10000, backupCount=1)
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
 
-    app.run(debug=True, port=port, host='0.0.0.0')
+    app.run(debug=False, port=port, host='0.0.0.0')

@@ -111,16 +111,6 @@ function handleInput(userText, dialogflowClient) {
           var t4_url = metadata[3][1];
           var t5_desc = metadata[4][0];
           var t5_url = metadata[4][1];
-          var t6_desc = metadata[5][0];
-          var t6_url = metadata[5][1];
-          var t7_desc = metadata[6][0];
-          var t7_url = metadata[6][1];
-          var t8_desc = metadata[7][0];
-          var t8_url = metadata[7][1];
-          var t9_desc = metadata[8][0];
-          var t9_url = metadata[8][1];
-          var t10_desc = metadata[9][0];
-          var t10_url = metadata[9][1];
 
           // disgusting, I'm sorry...
           msg.onend = function() {
@@ -129,21 +119,11 @@ function handleInput(userText, dialogflowClient) {
                 playSong(t3_desc, t3_url).then(function() {
                   playSong(t4_desc, t4_url).then(function() {
                     playSong(t5_desc, t5_url).then(function() {
-                      playSong(t6_desc, t6_url).then(function() {
-                        playSong(t7_desc, t7_url).then(function() {
-                          playSong(t8_desc, t8_url).then(function() {
-                            playSong(t9_desc, t9_url).then(function() {
-                              playSong(t10_desc, t10_url).then(function() {
-                                playingStage = false;
-                                var question = "Thank you for using Eli.";
-                                msg = new SpeechSynthesisUtterance(question);
-                                botSays(question);
-                                window.speechSynthesis.speak(msg);
-                              })
-                            })
-                          })
-                        })
-                      })
+                      playingStage = false;
+                      var question = "Thank you for using Eli.";
+                      msg = new SpeechSynthesisUtterance(question);
+                      botSays(question);
+                      window.speechSynthesis.speak(msg);
                     })
                   })
                 })

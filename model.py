@@ -47,19 +47,18 @@ class Model:
         self.trainPairs = trainPairs
         self.seenPairs = []
         self.testSet = testSet
-        self.trackGenres = trackGenres         # what genre each track is
+        self.trackGenres = trackGenres          # what genre each track is
         self.Xtrain = np.zeros((1, 2 * 50))
         self.Ytrain = np.array([0])
-        self.elicitationFinished = False       # flag to denote that model building has begun
+        self.elicitationFinished = False        # flag to denote that model building has begun
         self.recommendationsReady = False
-        self.recommendations = []              # use this for production (change interface.py line 41)
-
-        self.experimentRecommendations = []    # use this for evaluation (change interface.py line 41)
-        self.duplicatePairs = duplicatePairs   # for evaluation
-        self.duplicatePairFlag = False         # for evaluation
-        self.elicitationStartTime = None       # for evaluation, time the first pair was presented
-        self.trackStartTime = None             # for evaluation, time when a pair was presented
-        self.cumAssessmentTime = 0             # for evaluation, total time spent assessing pairs
+        self.elicitationStartTime = None        # for evaluation, time the first pair was presented
+        self.trackStartTime = None
+        self.cumAssessmentTime = 0
+        self.recommendations = []               # use this for production (change interface.py line 41)
+        # self.experimentRecommendations = []   # use this for evaluation (change interface.py line 41)
+        # self.duplicatePairs = duplicatePairs  # for evaluation
+        # self.duplicatePairFlag = False        # for evaluation
 
         log.info("Instance initialised.")
 
@@ -68,9 +67,9 @@ class Model:
             self.Ytrain = np.vstack((self.Ytrain, preference))
 
             # Only for evaluation
-            if self.duplicatePairFlag is True:
-                log.info("THIS IS A DUPLICATE PAIR")
-                self.duplicatePairFlag = False
+            # if self.duplicatePairFlag is True:
+            #     log.info("THIS IS A DUPLICATE PAIR")
+            #     self.duplicatePairFlag = False
 
             return True
         else:
@@ -87,13 +86,14 @@ class Model:
 
         pair = self.trainPairs.pop(0)
 
+        # Only for evaluation
         # to be used by the rate_pair function:
         # this odd comparison approach has to be used due to a bug in numpy
-        for i in range(len(self.duplicatePairs)):
-            if np.array_equal(self.duplicatePairs[i][0],pair[0]) and \
-                    np.array_equal(self.duplicatePairs[i][1], pair[1]):
-                self.duplicatePairFlag = True
-                break
+        # for i in range(len(self.duplicatePairs)):
+        #     if np.array_equal(self.duplicatePairs[i][0],pair[0]) and \
+        #             np.array_equal(self.duplicatePairs[i][1], pair[1]):
+        #         self.duplicatePairFlag = True
+        #         break
 
         self.seenPairs += [pair]
 
@@ -202,27 +202,27 @@ class Model:
             log.info("\tGenre: %s", self.trackGenres[delta_track[i][0][0]])
             log.info("\tDelta: %s", str(delta_track[i][1]))
 
-        # for the experiment, also include 5 tracks that have mean deltas
-        # i.e. the user doesn't love them nor hate them
-        experimentRecommendations = []
-        middleRange = range(int(len(delta_track)/2) - 2, int(len(delta_track)/2) + 3)
-        for i in middleRange:
-            experimentRecommendations += [(delta_track[i][0][1] + " - " + delta_track[i][0][2], delta_track[i][0][3])]
-
-        # add the original recommendations
-        experimentRecommendations += recommendations
-
-        # print them as well
-        log.info("\nExperimental 'recommendations' (not in the order presented):")
-        for i in range(len(experimentRecommendations)):
-            log.info("%s", experimentRecommendations[i][0])
-
-        # shuffle the list so that it's not obvious
-        np.random.shuffle(experimentRecommendations)
+        # # for the experiment, also include 5 tracks that have mean deltas
+        # # i.e. the user doesn't love them nor hate them
+        # experimentRecommendations = []
+        # middleRange = range(int(len(delta_track)/2) - 2, int(len(delta_track)/2) + 3)
+        # for i in middleRange:
+        #     experimentRecommendations += [(delta_track[i][0][1] + " - " + delta_track[i][0][2], delta_track[i][0][3])]
+        #
+        # # add the original recommendations
+        # experimentRecommendations += recommendations
+        #
+        # # print them as well
+        # log.info("\nExperimental 'recommendations' (not in the order presented):")
+        # for i in range(len(experimentRecommendations)):
+        #     log.info("%s", experimentRecommendations[i][0])
+        #
+        # # shuffle the list so that it's not obvious
+        # np.random.shuffle(experimentRecommendations)
 
         self.recommendationsReady = True
         self.recommendations = recommendations
-        self.experimentRecommendations = experimentRecommendations
+        # self.experimentRecommendations = experimentRecommendations
 
 
 if __name__ == '__main__':

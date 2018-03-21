@@ -37,10 +37,10 @@ def processRequest(req, state):
         if len(state.trainPairs) == 0 and len(state.Xtrain) == len(state.Ytrain):
             if state.recommendationsReady is True:
                 return ({
-                    "speech": "Here are 10 songs I think you'll like:",
-                    "displayText": "Here are 10 songs I think you'll like:",
+                    "speech": "Here are 5 songs I think you'll like:",
+                    "displayText": "Here are 5 songs I think you'll like:",
                     "source": "projecteli",
-                    "data": state.experimentRecommendations
+                    "data": state.recommendations
                 }, state)
             else:
                 return ({
