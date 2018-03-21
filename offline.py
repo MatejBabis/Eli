@@ -65,8 +65,7 @@ def process_training_data(trainPairs, pref, automated):
 def hyperparameter_optimization(kernel, likelihood, inference, evaluation, Xtrain, Ytrain):
     # dimensions of the matrix that will hold hyperparameter
     # values within range (1:10)
-    # dimension = np.arange(1.0, 10.0, 0.25)
-    dimension = np.arange(1.0, 10.0, 1)
+    dimension = np.arange(1.0, 10.0, 0.25)
     # arbitrary large values
     minimum = 9999
     min_l = 999
@@ -87,8 +86,7 @@ def hyperparameter_optimization(kernel, likelihood, inference, evaluation, Xtrai
                 min_v = v
 
             if evaluation is True:
-                # hyper_values[int(np.rint(l * 4)) - 4][int(np.rint(v * 4)) - 4] = -m.log_likelihood()
-                hyper_values[int(np.rint(l)) - 1][int(np.rint(v)) - 1] = -m.log_likelihood()
+                hyper_values[int(np.rint(l * 4)) - 4][int(np.rint(v * 4)) - 4] = -m.log_likelihood()
 
     print "\nHyperparameter optimization completed."
     print "Minimum log likelihood estimation:", str(minimum)
@@ -148,6 +146,14 @@ automated = True
 # Represent the order of preferences for automated responses
 pref = ["metal", "rap", "classical", "blues", "disco"]
 
+print "\n######################################################"
+print "Preference vector:"
+for genre in pref:
+    print genre,
+    if genre != pref[-1]:
+        print ">",
+print "\n######################################################"
+
 Xtrain, Ytrain = process_training_data(trainPairs, pref, automated)
 
 ###########################
@@ -195,6 +201,8 @@ if evalMode is True:
 ###########################
 # MODEL DEFINITION
 
+print "\nBuilding model..."
+
 # we use a PJK kernel with RBF base
 kernel = GPy.kern.PjkRbf(Xtrain.shape[1])
 likelihood = GPy.likelihoods.Bernoulli()
@@ -228,7 +236,8 @@ for i in range(len(cumsum)):
 delta_track.sort(key=lambda x: x[1], reverse=True)
 
 # print top 10 recommendations
-print "\nRecommendations:"
+print "\n######################################################"
+print "Top 10 Recommendations:"
 for i in range(10):
     # Artist - Track
     print delta_track[i][0][1] + " - " + delta_track[i][0][2]

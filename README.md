@@ -18,6 +18,7 @@ Webhook: `https://projecteli.ngrok.io/`
 * [ngrok](https://www.ngrok.com)
    * Dialogflow API requires a webhook to be connected to. By running a Flask Python app on localhost, we can tunnel the domain onto a local machine.
    * In order to simplify the installation process, a _Pro_ version of ngrok has been purchased.
+      * Add ngrok to the project directory.
       * Add the paid token: `./ngrok authtoken 2jfkXCKdvDiqpTogmekeM_7GmFBngKeENs4BGcoCFU8`.
 
 
